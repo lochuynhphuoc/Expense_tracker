@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Register • MoneyFlow{% endblock %}
+
+{% block content %}
+{% if form.errors %}
+<div class="toast-container">
+    <div class="toast error" style="animation-duration: 10s;">
+        <div style="margin-bottom: 6px; font-weight: 600;">Please check the following errors:</div>
+        <ul style="margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.4;">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li style="margin-bottom: 4px;">
+                        <strong>{{ field.label }}:</strong> {{ error }}
+                    </li>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<section class="form-card">
+    <div style="text-align: center; margin-bottom: 24px;">
+        <h2 class="form-title" style="margin-bottom: 8px;"><i class='bx bx-user-plus'></i> Create an account</h2>
+        <p style="color: var(--muted); font-size: 14px; margin: 0;">Start tracking your budget today</p>
+    </div>
+
+    <form method="post" class="form-grid">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+            <div class="help-text">{{ field.help_text|safe }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div class="actions">
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;"><i class='bx bx-check-circle'></i> Sign Up</button>
+        </div>
+
+        <div class="auth-footer">
+            Already have an account? <a href="{% url 'login' %}">Log in</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

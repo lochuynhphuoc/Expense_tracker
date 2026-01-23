@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Login • MoneyFlow{% endblock %}
+
+{% block content %}
+{% if form.errors %}
+<div class="toast-container">
+    <div class="toast error">
+        <strong>Login Failed:</strong> Invalid username or password.
+    </div>
+</div>
+{% endif %}
+
+<section class="form-card">
+    <div style="text-align: center; margin-bottom: 24px;">
+        <h2 class="form-title" style="margin-bottom: 8px;"><i class='bx bx-user-check'></i> Welcome back</h2>
+        <p style="color: var(--muted); font-size: 14px; margin: 0;">Login to manage your expenses</p>
+    </div>
+
+    <form method="post" class="form-grid">
+        {% csrf_token %}
+        <div class="form-field">
+            <label for="id_username"><i class='bx bx-user'></i> Username</label>
+            {{ form.username }}
+        </div>
+        <div class="form-field">
+            <label for="id_password"><i class='bx bx-lock-alt'></i> Password</label>
+            {{ form.password }}
+        </div>
+        
+        <div class="actions">
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;"><i class='bx bx-log-in-circle'></i> Login</button>
+        </div>
+
+        <div class="auth-footer">
+            Don't have an account? <a href="{% url 'register' %}">Sign up</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Overview • MoneyFlow{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-card">
+        <h1 class="hero-title"><i class='bx bxs-pie-chart-alt-2'></i> Your spending overview</h1>
+        <p class="hero-subtitle">Track daily expenses and stay on top of your budget.</p>
+    </div>
+</section>
+
+<!-- KPI Panels -->
+<section class="kpi-grid">
+    <div class="kpi-card">
+        <h3><i class='bx bxs-wallet'></i> Total Spent (All Time)</h3>
+        <div class="value">{{ total_amount|floatformat:0|intcomma }} VNĐ</div>
+        <div class="helper">Lifetime spending across all categories</div>
+    </div>
+    <div class="kpi-card">
+        <h3><i class='bx bx-calendar-check'></i> Spending This Month</h3>
+        <div class="value">{{ month_total|floatformat:0|intcomma }} VNĐ</div>
+        <div class="helper">Total expenses for {% now "F" %}</div>
+    </div>
+</section>
+
+<!-- Analysis Chart -->
+<section class="chart-section">
+    <div class="chart-header">
+        <div>
+            <h3><i class='bx bxs-bar-chart-alt-2'></i> Top Categories Analysis</h3>
+            <div class="helper">Spending breakdown by category (Top 8)</div>
+        </div>
+    </div>
+    <div style="position: relative; height: 280px; width: 100%;">
+        <canvas id="categoryChart"></canvas>
+    </div>
+</section>
+
+<section class="table-wrap" id="expense-table">
+    <table class="table">
+        <thead>
+            <tr>
+                <th><i class='bx bx-calendar'></i> Date</th>
+                <th><i class='bx bx-category'></i> Category</th>
+                <th>
+                    <div class="amount-header">
+                        <span><i class='bx bx-dollar-circle'></i> Amount</span>
+                        <div class="amount-sort">
+                            <a class="amount-sort-link {% if amount_sort == 'asc' %}active{% endif %}" href="?amount_sort=asc&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}#expense-table"><i class='bx bx-up-arrow-alt'></i></a>
+                            <a class="amount-sort-link {% if amount_sort == 'desc' %}active{% endif %}" href="?amount_sort=desc&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}#expense-table"><i class='bx bx-down-arrow-alt'></i></a>
+                        </div>
+                    </div>
+                </th>
+                <th><i class='bx bx-text'></i> Description</th>
+                <th><i class='bx bx-cog'></i> Actions</th>
+            </tr>
+            <tr class="filter-row">
+                <th>
+                    <form method="get" class="header-filter">
+                        <input type="hidden" name="category_group" value="{{ category_group }}">
+                        <input type="hidden" name="amount_sort" value="{{ amount_sort }}">
+                        <select name="date_mode" class="mini-select" onchange="this.form.submit()">
+                            <option value="">All</option>
+                            <option value="day" {% if date_mode == 'day' %}selected{% endif %}>Day</option>
+                            <option value="month" {% if date_mode == 'month' %}selected{% endif %}>Month</option>
+                            <option value="year" {% if date_mode == 'year' %}selected{% endif %}>Year</option>
+                        </select>
+                        <div class="date-fields" data-mode="{{ date_mode }}">
+                            <input name="day" class="mini-input" placeholder="dd" value="{{ day }}" maxlength="2">
+                            <span>/</span>
+                            <input name="month" class="mini-input" placeholder="mm" value="{{ month }}" maxlength="2">
+                            <span>/</span>
+                            <input name="year" class="mini-input year" placeholder="yyyy" value="{{ year }}" maxlength="4">
+                        </div>
+                        <button type="submit" class="mini-btn"><i class='bx bx-search'></i></button>
+                    </form>
+                </th>
+                <th>
+                    <form method="get" class="header-filter">
+                        <input type="hidden" name="date_mode" value="{{ date_mode }}">
+                        <input type="hidden" name="day" value="{{ day }}">
+                        <input type="hidden" name="month" value="{{ month }}">
+                        <input type="hidden" name="year" value="{{ year }}">
+                        <input type="hidden" name="amount_sort" value="{{ amount_sort }}">
+                        <select name="category_group" class="mini-select" onchange="this.form.submit()">
+                            <option value="">All</option>
+                            {% for group in category_groups_with_counts %}
+                                <option value="{{ group.name }}" {% if category_group == group.name %}selected{% endif %}>{{ group.name }} ({{ group.count }})</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if expenses %}
+                {% for e in expenses %}
+                    <tr>
+                        <td>{{ e.date|date:"d/m/Y" }}</td>
+                        <td>{{ e.category_label }}</td>
+                        <td>
+                            <div class="amount-cell">
+                                <span class="amount-value">{{ e.amount|floatformat:0|intcomma }}</span>
+                                <span class="amount-currency">{{ e.currency }}</span>
+                            </div>
+                        </td>
+                        <td>{{ e.description|default:"-" }}</td>
+                        <td>
+                            <div class="table-actions">
+                                <a class="btn btn-ghost btn-sm" href="{% url 'edit_expense' e.id %}"><i class='bx bx-edit'></i></a>
+                                <a class="btn btn-ghost btn-sm btn-danger" href="{% url 'delete_expense' e.id %}"><i class='bx bx-trash'></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5" class="empty">No expenses yet. Start tracking by adding your first expense.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&amount_sort={{ amount_sort }}&category_group={{ category_group }}#expense-table"><i class='bx bx-chevron-left'></i> Prev</a>
+            {% else %}
+                <span class="page-link disabled"><i class='bx bx-chevron-left'></i> Prev</span>
+            {% endif %}
+
+            <span class="page-info">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&amount_sort={{ amount_sort }}&category_group={{ category_group }}#expense-table">Next <i class='bx bx-chevron-right'></i></a>
+            {% else %}
+                <span class="page-link disabled">Next <i class='bx bx-chevron-right'></i></span>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+
+{{ chart_labels|json_script:"chart-labels" }}
+{{ chart_values|json_script:"chart-values" }}
+
+<script>
+    (function () {
+        const labels = JSON.parse(document.getElementById('chart-labels').textContent || '[]');
+        const values = JSON.parse(document.getElementById('chart-values').textContent || '[]');
+        const canvas = document.getElementById('categoryChart');
+        if (!canvas) return;
+
+        const renderChart = () => {
+            if (!window.Chart) return;
+            const styles = getComputedStyle(document.body);
+            const muted = styles.getPropertyValue('--muted').trim() || '#9ca3af';
+            const border = styles.getPropertyValue('--border').trim() || 'rgba(148, 163, 184, 0.15)';
+            const accent = styles.getPropertyValue('--accent').trim() || '#2dd4bf';
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Create gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(45, 212, 191, 0.5)'); // brand accent
+            gradient.addColorStop(1, 'rgba(45, 212, 191, 0.1)');
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'VNĐ',
+                            data: values,
+                            backgroundColor: gradient,
+                            borderColor: accent,
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            barThickness: 'flex',
+                            maxBarThickness: 50,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            padding: 12,
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 13, weight: 'bold' },
+                            cornerRadius: 8,
+                            displayColors: false,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: muted, 
+                                font: { size: 11 },
+                                maxRotation: 45, 
+                                autoSkip: false
+                            },
+                            grid: { display: false },
+                        },
+                        y: {
+                            ticks: { 
+                                color: muted, 
+                                font: { size: 11 },
+                                precision: 0,
+                                callback: function(value) {
+                                    if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
+                                    if (value >= 1000) return (value/1000).toFixed(0) + 'k';
+                                    return value;
+                                }
+                            },
+                            grid: { 
+                                color: border,
+                                borderDash: [4, 4],
+                                drawBorder: false,
+                            },
+                            beginAtZero: true
+                        },
+                    },
+                },
+            });
+        };
+
+        window.addEventListener('load', () => {
+            if (window.Chart) {
+                renderChart();
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            script.onload = renderChart;
+            document.body.appendChild(script);
+        });
+    })();
+</script>
+
+<script>
+    (function () {
+        document.querySelectorAll('.date-fields').forEach((wrapper) => {
+            const mode = wrapper.dataset.mode;
+            const day = wrapper.querySelector('input[name="day"]');
+            const month = wrapper.querySelector('input[name="month"]');
+            const year = wrapper.querySelector('input[name="year"]');
+            if (!mode) {
+                wrapper.style.display = 'none';
+                return;
+            }
+            if (mode === 'day') {
+                day.style.display = 'inline-block';
+                month.style.display = 'inline-block';
+                year.style.display = 'inline-block';
+            } else if (mode === 'month') {
+                day.style.display = 'none';
+                month.style.display = 'inline-block';
+                year.style.display = 'inline-block';
+            } else if (mode === 'year') {
+                day.style.display = 'none';
+                month.style.display = 'none';
+                year.style.display = 'inline-block';
+            }
+        });
+    })();
+</script>
+
+<script>
+    (function () {
+        const storageKey = 'expense-scroll-state';
+        const saveState = () => {
+            sessionStorage.setItem(storageKey, JSON.stringify({
+                y: window.scrollY,
+                path: window.location.pathname,
+                ts: Date.now(),
+            }));
+        };
+
+        document.querySelectorAll('.page-link, .table-actions a, .amount-sort-link').forEach((link) => {
+            link.addEventListener('click', (event) => {
+                if (link.dataset.resetScroll === 'true') {
+                    sessionStorage.removeItem(storageKey);
+                    return;
+                }
+                saveState();
+            });
+        });
+
+        document.querySelectorAll('[data-reset-scroll="true"]').forEach((link) => {
+            link.addEventListener('click', () => {
+                sessionStorage.removeItem(storageKey);
+            });
+        });
+
+        const toolbarForms = document.querySelectorAll('.table-toolbar form');
+        toolbarForms.forEach((form) => {
+            form.addEventListener('submit', saveState);
+        });
+
+        const params = new URLSearchParams(window.location.search);
+        if (window.location.search === '') {
+            sessionStorage.removeItem(storageKey);
+        } else {
+            const saved = sessionStorage.getItem(storageKey);
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.path === window.location.pathname) {
+                        window.scrollTo(0, data.y || 0);
+                    }
+                } catch (err) {
+                    // ignore
+                }
+            }
+        }
+
+        const isSortAction = params.has('amount_sort') || params.has('date_mode') || params.has('category_group');
+        if (isSortAction && !params.has('page')) {
+            const table = document.getElementById('expense-table');
+            if (table) {
+                setTimeout(() => {
+                    table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+            }
+        }
+
+        window.addEventListener('beforeunload', saveState);
+    })();
+</script>
+
+{% endblock %}

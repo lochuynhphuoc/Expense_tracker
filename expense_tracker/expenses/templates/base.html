@@ -1,0 +1,120 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}MoneyFlow{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'expenses/logo.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{% static 'expenses/styles.css' %}">
+</head>
+<body class="app-body" data-theme="dark">
+    <header class="app-header">
+        <div class="container header-inner">
+            <div class="brand">
+                <div class="logo">
+                    <img src="{% static 'expenses/logo.png' %}" alt="Logo">
+                    <!-- <i class='bx bxs-wallet-alt' style="font-size: 32px; color: var(--primary);"></i> -->
+                </div>
+                <div>
+                    <div class="brand-title">MoneyFlow</div>
+                    <div class="brand-subtitle">Track smarter. Spend better.</div>
+                </div>
+            </div>
+            <nav class="nav">
+                <a href="{% url 'expense_list' %}" class="nav-link" data-reset-scroll="true"><i class='bx bxs-dashboard'></i> Overview</a>
+                <a href="{% url 'add_expense' %}" class="nav-link nav-primary"><i class='bx bx-plus'></i> Add Expense</a>
+                <button id="theme-toggle" class="nav-link nav-toggle" type="button" aria-label="Toggle theme"><i class='bx bx-moon'></i></button>
+                <div class="nav-time"><i class='bx bx-time'></i> <span id="current-datetime">{% now "d/m/Y H:i" %}</span></div>
+                {% if request.user.is_authenticated %}
+                    <div class="nav-user"><i class='bx bx-user'></i> {{ request.user.username }}</div>
+                    <a href="{% url 'logout' %}" class="nav-link"><i class='bx bx-log-out'></i> Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="nav-link"><i class='bx bx-log-in'></i> Login</a>
+                    <a href="{% url 'register' %}" class="nav-link nav-primary"><i class='bx bx-user-plus'></i> Sign Up</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="container app-main">
+        {% if messages %}
+            <div class="toast-container">
+                {% for message in messages %}
+                    <div class="toast {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="app-footer">
+        <div class="container footer-inner">
+            <div>© {% now "Y" %} MoneyFlow</div>
+            <div>Built with Django</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = document.querySelectorAll('.datepicker');
+            if (!inputs.length || !window.flatpickr) return;
+            inputs.forEach((input) => {
+                flatpickr(input, {
+                    dateFormat: 'd/m/Y',
+                    defaultDate: input.value || 'today',
+                    allowInput: true,
+                });
+            });
+        });
+    </script>
+    <script>
+        (function () {
+            const body = document.body;
+            const toggle = document.getElementById('theme-toggle');
+            const stored = localStorage.getItem('expense-theme');
+            const initial = stored || 'dark';
+            body.setAttribute('data-theme', initial);
+            if (toggle) {
+                const updateIcon = (theme) => {
+                    toggle.innerHTML = theme === 'dark' ? "<i class='bx bx-moon'></i>" : "<i class='bx bx-sun'></i>";
+                };
+                updateIcon(initial);
+                toggle.addEventListener('click', () => {
+                    const next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                    body.setAttribute('data-theme', next);
+                    localStorage.setItem('expense-theme', next);
+                    updateIcon(next);
+                });
+            }
+        })();
+    </script>
+    <script>
+        (function () {
+            const el = document.getElementById('current-datetime');
+            if (!el) return;
+            const formatter = new Intl.DateTimeFormat('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+            });
+            const tick = () => {
+                el.textContent = formatter.format(new Date()).replace(',', '');
+            };
+            tick();
+            setInterval(tick, 1000);
+        })();
+    </script>
+</body>
+</html>

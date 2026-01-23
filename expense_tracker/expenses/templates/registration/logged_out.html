@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Logged Out • MoneyFlow{% endblock %}
+
+{% block content %}
+<section class="hero" style="text-align: center; padding: 4rem 0;">
+    <div class="hero-card">
+        <h1 class="hero-title">You have been logged out</h1>
+        <p class="hero-subtitle">Thanks for using MoneyFlow. See you soon!</p>
+        <div style="margin-top: 2rem;">
+            <a href="{% url 'login' %}" class="btn btn-primary" style="text-decoration: none;">Login Again</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
