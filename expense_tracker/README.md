@@ -97,7 +97,19 @@ Nếu muốn có dữ liệu mẫu hoặc cấu trúc sẵn có, hãy import fil
 Kiểm tra file [expense_tracker/settings.py](expense_tracker/settings.py) đã có cấu hình:
 
 ```python
-s
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'expense_tracker',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        }
+    }
+}
 ```
 
 > Nếu có mật khẩu cho MySQL, hãy cập nhật trường `PASSWORD`.
@@ -111,7 +123,7 @@ python manage.py migrate
 ### (Tuỳ chọn) Tạo tài khoản admin
 
 ```bash
-bỏ qua bước này, vì trong database.sql đã insert tài khoản admin (mật khẩu admin) với các dữ liệu mẫu)
+bỏ qua bước này, vì trong database.sql đã insert tài khoản admin (mật khẩu admin) với các dữ liệu mẫu
 python manage.py createsuperuser
 ```
 
@@ -122,7 +134,7 @@ cd expense_tracker
 python manage.py runserver
 ```
 
-Mở trình duyệt tại: http://127.0.0.1:8000/ và đăng nhập với tài khoản admin mặc định (admin/ admin)
+Mở trình duyệt tại: http://127.0.0.1:8000/ và đăng nhập với tài khoản admin mặc định (user: admin, password: admin)
 
 ## Ghi chú
 
