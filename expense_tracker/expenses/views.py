@@ -1,12 +1,15 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.utils import timezone
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from django.core.paginator import Paginator
+from django.http import HttpResponse
+import csv
 from .models import Expense, Category
-from .forms import ExpenseForm, CATEGORY_GROUPS
+from .forms import ExpenseForm, CATEGORY_GROUPS, CURRENCY_CHOICES
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
@@ -46,16 +49,19 @@ def add_expense(request):
         return redirect('expense_list')
     return render(request, 'expenses/add_expense.html', {'form': form})
 
-@login_required
-def expense_list(request):
+def _apply_filters(request, base_qs):
     category_group = request.GET.get('category_group', '')
     date_mode = request.GET.get('date_mode', '')
     day = request.GET.get('day', '')
     month = request.GET.get('month', '')
     year = request.GET.get('year', '')
     amount_sort = request.GET.get('amount_sort', '')
+    q = request.GET.get('q', '').strip()
+    amount_min = request.GET.get('amount_min', '').strip()
+    amount_max = request.GET.get('amount_max', '').strip()
+    currency = request.GET.get('currency', '').strip()
 
-    period_qs = Expense.objects.filter(user=request.user)
+    period_qs = base_qs
 
     if date_mode == 'day' and day and month and year:
         try:
@@ -74,10 +80,26 @@ def expense_list(request):
         except ValueError:
             pass
 
+    filtered_qs = period_qs
     if category_group:
-        filtered_qs = period_qs.filter(category__name__startswith=f"{category_group} - ")
-    else:
-        filtered_qs = period_qs
+        filtered_qs = filtered_qs.filter(category__name__startswith=f"{category_group} - ")
+
+    if q:
+        filtered_qs = filtered_qs.filter(
+            Q(description__icontains=q) |
+            Q(category__name__icontains=q)
+        )
+
+    if currency:
+        filtered_qs = filtered_qs.filter(currency=currency)
+
+    try:
+        if amount_min:
+            filtered_qs = filtered_qs.filter(amount__gte=Decimal(amount_min.replace(',', '')))
+        if amount_max:
+            filtered_qs = filtered_qs.filter(amount__lte=Decimal(amount_max.replace(',', '')))
+    except (InvalidOperation, ValueError):
+        pass
 
     order_by = ['-date']
     if amount_sort == 'asc':
@@ -85,7 +107,29 @@ def expense_list(request):
     elif amount_sort == 'desc':
         order_by = ['-amount', '-date']
 
-    expenses = filtered_qs.order_by(*order_by)
+    return {
+        'period_qs': period_qs,
+        'filtered_qs': filtered_qs,
+        'category_group': category_group,
+        'date_mode': date_mode,
+        'day': day,
+        'month': month,
+        'year': year,
+        'amount_sort': amount_sort,
+        'q': q,
+        'amount_min': amount_min,
+        'amount_max': amount_max,
+        'currency': currency,
+        'order_by': order_by,
+    }
+
+
+@login_required
+def expense_list(request):
+    base_qs = Expense.objects.filter(user=request.user)
+    filters = _apply_filters(request, base_qs)
+
+    expenses = filters['filtered_qs'].order_by(*filters['order_by'])
     paginator = Paginator(expenses, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -93,10 +137,24 @@ def expense_list(request):
     all_vnd_expenses = Expense.objects.filter(user=request.user, currency='VND')
     total_amount = all_vnd_expenses.aggregate(total=Sum('amount'))['total'] or 0
     today = timezone.localdate()
-    vnd_expenses = filtered_qs.filter(currency='VND')
     month_total = all_vnd_expenses.filter(date__year=today.year, date__month=today.month).aggregate(total=Sum('amount'))['total'] or 0
+
+    vnd_in_view = filters['filtered_qs'].filter(currency='VND')
+    filtered_total_vnd = vnd_in_view.aggregate(total=Sum('amount'))['total'] or 0
+    distinct_days = vnd_in_view.values('date').distinct().count() or 0
+    avg_daily_vnd = (filtered_total_vnd / distinct_days) if distinct_days else 0
+
+    max_expense = filters['filtered_qs'].order_by('-amount', '-date').first()
+
+    chart_currency = filters['currency'] or 'VND'
+    chart_qs = filters['filtered_qs']
+    if filters['currency']:
+        chart_qs = chart_qs.filter(currency=filters['currency'])
+    else:
+        chart_qs = chart_qs.filter(currency='VND')
+
     chart_rows = (
-        all_vnd_expenses
+        chart_qs
         .values('category__name')
         .annotate(total=Sum('amount'))
         .order_by('-total')[:8]
@@ -111,9 +169,10 @@ def expense_list(request):
 
     chart_labels = [display_label(row['category__name']) for row in chart_rows]
     chart_values = [float(row['total'] or 0) for row in chart_rows]
+
     category_groups_with_counts = []
     for group in CATEGORY_GROUPS.keys():
-        count = period_qs.filter(category__name__startswith=f"{group} - ").count()
+        count = filters['period_qs'].filter(category__name__startswith=f"{group} - ").count()
         category_groups_with_counts.append({'name': group, 'count': count})
 
     context = {
@@ -121,18 +180,51 @@ def expense_list(request):
         'page_obj': page_obj,
         'total_amount': total_amount,
         'month_total': month_total,
+        'filtered_total_vnd': filtered_total_vnd,
+        'avg_daily_vnd': avg_daily_vnd,
+        'max_expense': max_expense,
         'count': expenses.count(),
-        'category_group': category_group,
-        'date_mode': date_mode,
-        'day': day,
-        'month': month,
-        'year': year,
-        'amount_sort': amount_sort,
+        'category_group': filters['category_group'],
+        'date_mode': filters['date_mode'],
+        'day': filters['day'],
+        'month': filters['month'],
+        'year': filters['year'],
+        'amount_sort': filters['amount_sort'],
+        'q': filters['q'],
+        'amount_min': filters['amount_min'],
+        'amount_max': filters['amount_max'],
+        'currency': filters['currency'],
+        'currency_choices': CURRENCY_CHOICES,
         'category_groups_with_counts': category_groups_with_counts,
         'chart_labels': chart_labels,
         'chart_values': chart_values,
+        'chart_currency': chart_currency,
     }
     return render(request, 'expenses/expense_list.html', context)
+
+
+@login_required
+def export_expenses(request):
+    base_qs = Expense.objects.filter(user=request.user)
+    filters = _apply_filters(request, base_qs)
+    export_qs = filters['filtered_qs'].order_by('-date', '-id')
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="expenses_export.csv"'
+    response.write('\ufeff')
+    writer = csv.writer(response)
+    writer.writerow(['Date', 'Category', 'Amount', 'Currency', 'Description'])
+
+    for item in export_qs:
+        writer.writerow([
+            item.date.strftime('%d/%m/%Y'),
+            item.category_label,
+            f"{item.amount:.2f}",
+            item.currency,
+            item.description or '-',
+        ])
+
+    return response
 
 
 @login_required

@@ -4,7 +4,7 @@
 {% block title %}Overview • MoneyFlow{% endblock %}
 
 {% block content %}
-<section class="hero">
+<section class="hero fade-in">
     <div class="hero-card">
         <h1 class="hero-title"><i class='bx bxs-pie-chart-alt-2'></i> Your spending overview</h1>
         <p class="hero-subtitle">Track daily expenses and stay on top of your budget.</p>
@@ -12,34 +12,77 @@
 </section>
 
 <!-- KPI Panels -->
-<section class="kpi-grid">
-    <div class="kpi-card">
+<section class="kpi-grid compact-grid">
+    <div class="kpi-card reveal">
         <h3><i class='bx bxs-wallet'></i> Total Spent (All Time)</h3>
         <div class="value">{{ total_amount|floatformat:0|intcomma }} VNĐ</div>
         <div class="helper">Lifetime spending across all categories</div>
     </div>
-    <div class="kpi-card">
+    <div class="kpi-card reveal">
         <h3><i class='bx bx-calendar-check'></i> Spending This Month</h3>
         <div class="value">{{ month_total|floatformat:0|intcomma }} VNĐ</div>
         <div class="helper">Total expenses for {% now "F" %}</div>
     </div>
+    <div class="kpi-card reveal">
+        <h3><i class='bx bx-target-lock'></i> Total in Current View</h3>
+        <div class="value">{{ filtered_total_vnd|floatformat:0|intcomma }} VNĐ</div>
+        <div class="helper">Based on applied filters (VND only)</div>
+    </div>
+    <div class="kpi-card reveal">
+        <h3><i class='bx bx-trending-up'></i> Biggest Expense</h3>
+        {% if max_expense %}
+            <div class="value">{{ max_expense.amount|floatformat:0|intcomma }} {{ max_expense.currency }}</div>
+            <div class="helper">{{ max_expense.category_label }}</div>
+        {% else %}
+            <div class="value">0</div>
+            <div class="helper">No expenses yet</div>
+        {% endif %}
+    </div>
 </section>
 
 <!-- Analysis Chart -->
-<section class="chart-section">
-    <div class="chart-header">
-        <div>
-            <h3><i class='bx bxs-bar-chart-alt-2'></i> Top Categories Analysis</h3>
-            <div class="helper">Spending breakdown by category (Top 8)</div>
+<section class="dashboard-row">
+    <div class="chart-section reveal">
+        <div class="chart-header">
+            <div>
+                <h3><i class='bx bxs-bar-chart-alt-2'></i> Top Categories Analysis</h3>
+                <div class="helper">Spending breakdown by category (Top 8) • {{ chart_currency }}</div>
+            </div>
+        </div>
+        <div style="position: relative; height: 280px; width: 100%;">
+            <canvas id="categoryChart"></canvas>
         </div>
     </div>
-    <div style="position: relative; height: 280px; width: 100%;">
-        <canvas id="categoryChart"></canvas>
-    </div>
-</section>
 
-<section class="table-wrap" id="expense-table">
-    <table class="table">
+    <section class="table-wrap reveal" id="expense-table">
+        <div class="table-toolbar">
+            <div class="toolbar-group">
+                <form method="get" class="toolbar-form">
+                    <input type="hidden" name="date_mode" value="{{ date_mode }}">
+                    <input type="hidden" name="day" value="{{ day }}">
+                    <input type="hidden" name="month" value="{{ month }}">
+                    <input type="hidden" name="year" value="{{ year }}">
+                    <input type="hidden" name="category_group" value="{{ category_group }}">
+                    <input type="hidden" name="amount_sort" value="{{ amount_sort }}">
+
+                    <input type="text" name="q" class="mini-input search-input" placeholder="Search note/category" value="{{ q }}">
+                    <input type="text" name="amount_min" class="mini-input amount-input" placeholder="Min" value="{{ amount_min }}">
+                    <input type="text" name="amount_max" class="mini-input amount-input" placeholder="Max" value="{{ amount_max }}">
+                    <select name="currency" class="mini-select" aria-label="Currency">
+                        <option value="">All currencies</option>
+                        {% for code, label in currency_choices %}
+                            <option value="{{ code }}" {% if currency == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="mini-btn"><i class='bx bx-filter-alt'></i> Apply</button>
+                    <a class="mini-btn" href="?" data-reset-scroll="true"><i class='bx bx-refresh'></i> Reset</a>
+                </form>
+            </div>
+            <div class="toolbar-group">
+                <a class="mini-btn" href="{% url 'export_expenses' %}?date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}&amount_sort={{ amount_sort }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}"><i class='bx bx-download'></i> Export CSV</a>
+            </div>
+        </div>
+        <table class="table">
         <thead>
             <tr>
                 <th><i class='bx bx-calendar'></i> Date</th>
@@ -144,6 +187,8 @@
     {% endif %}
 </section>
 
+</section>
+
 {{ chart_labels|json_script:"chart-labels" }}
 {{ chart_values|json_script:"chart-values" }}
 
@@ -174,7 +219,7 @@
                     labels,
                     datasets: [
                         {
-                            label: 'VNĐ',
+                            label: '{{ chart_currency }}',
                             data: values,
                             backgroundColor: gradient,
                             borderColor: accent,
