@@ -21,7 +21,10 @@
                     <span class="logo">
                         <img src="{% static 'expenses/logo.png' %}" alt="Logo">
                     </span>
-                    <span class="brand-text">MoneyFlow</span>
+                    <span class="brand-block">
+                        <span class="brand-text">Money<span class="brand-accent">Flow</span></span>
+                        <span class="brand-subtitle">Track smarter. Spend better.</span>
+                    </span>
                 </a>
             </div>
 
@@ -40,8 +43,8 @@
                             <span class="username">{{ request.user.username }}</span>
                         </button>
                         <div class="user-dropdown" role="menu" aria-label="User menu">
-                            <a class="dropdown-item" href="#" role="menuitem">Profile</a>
-                            <a class="dropdown-item" href="#" role="menuitem">Settings</a>
+                            <a class="dropdown-item" href="{% url 'profile' %}" role="menuitem">Profile</a>
+                            <a class="dropdown-item" href="{% url 'settings' %}" role="menuitem">Settings</a>
                             <a class="dropdown-item" href="{% url 'logout' %}" role="menuitem">Logout</a>
                         </div>
                     </div>
@@ -109,13 +112,25 @@
     </script>
     <div class="modal" id="expense-modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal="true"></div>
-        <div class="modal-card" role="dialog" aria-modal="true" aria-label="Add expense">
+            <div class="modal-card" role="dialog" aria-modal="true" aria-label="Expense modal">
             <div class="modal-header">
-                <h3>Add Expense</h3>
+                <h3 id="expense-modal-title">Add Expense</h3>
                 <button class="mini-btn" type="button" data-close-modal="true">Close</button>
             </div>
             <div class="modal-body">
                 <iframe id="expense-modal-frame" title="Add expense form" loading="lazy"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div class="confirm-modal" id="confirm-modal" aria-hidden="true">
+        <div class="confirm-backdrop" data-confirm-cancel="true"></div>
+        <div class="confirm-card" role="dialog" aria-modal="true" aria-label="Confirm action">
+            <div class="confirm-header">Confirm action</div>
+            <div class="confirm-body" id="confirm-message">Are you sure?</div>
+            <div class="confirm-actions">
+                <button class="btn btn-ghost" type="button" data-confirm-cancel="true">Cancel</button>
+                <button class="btn btn-danger" type="button" id="confirm-accept">Delete</button>
             </div>
         </div>
     </div>
@@ -154,24 +169,84 @@
             const openBtn = document.getElementById('open-expense-modal');
             const modal = document.getElementById('expense-modal');
             const frame = document.getElementById('expense-modal-frame');
-            if (!openBtn || !modal || !frame) return;
-            const openModal = () => {
-                frame.src = '{% url "add_expense" %}?modal=1';
+            if (!modal || !frame) return;
+            const titleEl = document.getElementById('expense-modal-title');
+            const openModal = (url, title) => {
+                frame.src = url;
                 modal.classList.add('open');
                 modal.setAttribute('aria-hidden', 'false');
+                if (titleEl && title) titleEl.textContent = title;
             };
             const closeModal = () => {
                 modal.classList.remove('open');
                 modal.setAttribute('aria-hidden', 'true');
                 frame.src = 'about:blank';
             };
-            openBtn.addEventListener('click', openModal);
+            if (openBtn) {
+                openBtn.addEventListener('click', () => openModal('{% url "add_expense" %}?modal=1', 'Add Expense'));
+            }
+            document.querySelectorAll('[data-open-modal="true"]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const url = btn.getAttribute('data-modal-url');
+                    const title = btn.getAttribute('data-modal-title');
+                    if (url) openModal(url, title || 'Add Expense');
+                });
+            });
             modal.querySelectorAll('[data-close-modal="true"]').forEach((el) => {
                 el.addEventListener('click', closeModal);
+            });
+            window.addEventListener('message', (event) => {
+                if (event.data === 'close-expense-modal') {
+                    closeModal();
+                }
             });
             document.addEventListener('keydown', (event) => {
                 if (event.key === 'Escape' && modal.classList.contains('open')) {
                     closeModal();
+                }
+            });
+        })();
+
+        (function () {
+            const confirmModal = document.getElementById('confirm-modal');
+            const confirmMessage = document.getElementById('confirm-message');
+            const confirmAccept = document.getElementById('confirm-accept');
+            let pendingForm = null;
+            if (!confirmModal || !confirmMessage || !confirmAccept) return;
+
+            const openConfirm = (message, form) => {
+                pendingForm = form;
+                confirmMessage.textContent = message || 'Are you sure?';
+                confirmModal.classList.add('open');
+                confirmModal.setAttribute('aria-hidden', 'false');
+            };
+
+            const closeConfirm = () => {
+                confirmModal.classList.remove('open');
+                confirmModal.setAttribute('aria-hidden', 'true');
+                pendingForm = null;
+            };
+
+            document.querySelectorAll('form[data-confirm]').forEach((form) => {
+                form.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    const message = form.getAttribute('data-confirm');
+                    openConfirm(message, form);
+                });
+            });
+
+            confirmAccept.addEventListener('click', () => {
+                if (pendingForm) pendingForm.submit();
+                closeConfirm();
+            });
+
+            confirmModal.querySelectorAll('[data-confirm-cancel="true"]').forEach((btn) => {
+                btn.addEventListener('click', closeConfirm);
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && confirmModal.classList.contains('open')) {
+                    closeConfirm();
                 }
             });
         })();

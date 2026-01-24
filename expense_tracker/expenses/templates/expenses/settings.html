@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings • MoneyFlow{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <h1>Settings</h1>
+        <p class="page-subtitle">Control how MoneyFlow behaves.</p>
+    </div>
+</section>
+
+<form method="post" class="settings-grid">
+    {% csrf_token %}
+
+    <section class="card-panel">
+        <div class="card-header">
+            <h2>Notifications</h2>
+        </div>
+        <div class="toggle-row">
+            <label>Budget warning</label>
+            <input type="checkbox" checked>
+        </div>
+        <div class="toggle-row">
+            <label>Insight reminders</label>
+            <input type="checkbox" checked>
+        </div>
+    </section>
+
+    <section class="card-panel">
+        <div class="card-header">
+            <h2>Finance preferences</h2>
+        </div>
+        <div class="form-row">
+            <label>Monthly budget</label>
+            <input class="input" type="text" placeholder="0">
+        </div>
+        <div class="form-row">
+            <label>Week start</label>
+            <select class="input">
+                <option>Monday</option>
+                <option>Sunday</option>
+            </select>
+        </div>
+    </section>
+
+    <section class="card-panel">
+        <div class="card-header">
+            <h2>Smart features</h2>
+        </div>
+        <div class="toggle-row">
+            <label>AI auto-categorization</label>
+            <input type="checkbox" checked>
+        </div>
+        <div class="form-row">
+            <label>Insight strictness</label>
+            <select class="input">
+                <option>Chill</option>
+                <option selected>Balanced</option>
+                <option>Strict</option>
+            </select>
+        </div>
+    </section>
+
+    <section class="card-panel">
+        <div class="card-header">
+            <h2>Appearance</h2>
+        </div>
+        <div class="form-row">
+            <label>Theme</label>
+            <select class="input">
+                <option>System</option>
+                <option>Light</option>
+                <option selected>Dark</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label>Language</label>
+            <select class="input">
+                <option>English</option>
+                <option>Vietnamese</option>
+            </select>
+        </div>
+    </section>
+
+    <section class="card-panel">
+        <div class="card-header">
+            <h2>Data & safety</h2>
+        </div>
+        <div class="button-row">
+            <button type="button" class="btn btn-ghost">Export CSV</button>
+            <button type="button" class="btn btn-ghost">Export Excel</button>
+        </div>
+        <div class="danger-zone">
+            <div>
+                <strong>Clear local data</strong>
+                <div class="muted">This action cannot be undone.</div>
+            </div>
+            <button type="button" class="btn btn-danger">Clear data</button>
+        </div>
+    </section>
+
+    <div class="settings-actions">
+        <button type="submit" class="btn btn-primary">Save settings</button>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Profile • MoneyFlow{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <h1>Profile</h1>
+        <p class="page-subtitle">Your spending identity and behavior at a glance.</p>
+    </div>
+</section>
+
+<section class="profile-grid">
+    <div class="card-panel">
+        <div class="card-header">
+            <h2>Identity</h2>
+            <span class="pill">Profile</span>
+        </div>
+        <div class="profile-identity">
+            <div class="profile-avatar"><i class='bx bx-user'></i></div>
+            <div>
+                <div class="profile-name">{{ request.user.username }}</div>
+                <div class="profile-meta">Joined {{ request.user.date_joined|date:"d/m/Y" }}</div>
+            </div>
+        </div>
+        <div class="form-row">
+            <label>Display name</label>
+            <input class="input" type="text" value="{{ request.user.username }}" readonly>
+        </div>
+        <div class="form-row">
+            <label>Currency</label>
+            <input class="input" type="text" value="VND" readonly>
+        </div>
+    </div>
+
+    <div class="card-panel">
+        <div class="card-header">
+            <h2>Spending Snapshot</h2>
+            <span class="pill">Summary</span>
+        </div>
+        <div class="stat-list">
+            <div>
+                <div class="stat-label">Transactions</div>
+                <div class="stat-value">{{ total_transactions|intcomma }}</div>
+            </div>
+            <div>
+                <div class="stat-label">Total recorded</div>
+                <div class="stat-value">{{ total_amount|floatformat:0|intcomma }} VND</div>
+            </div>
+            <div>
+                <div class="stat-label">Avg monthly</div>
+                <div class="stat-value">{{ avg_monthly|floatformat:0|intcomma }} VND</div>
+            </div>
+            <div>
+                <div class="stat-label">Top category</div>
+                <div class="stat-value">{{ top_category|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-panel">
+        <div class="card-header">
+            <h2>Spending Profile</h2>
+            <span class="pill">AI</span>
+        </div>
+        <div class="profile-highlight">
+            <div class="profile-badge">{{ spending_profile }}</div>
+            <div class="profile-note">{{ profile_explain }}</div>
+        </div>
+        <div class="insight-box">
+            <div class="insight-title">Insight</div>
+            <div class="insight-text">{{ insight }}</div>
+        </div>
+    </div>
+</section>
+{% endblock %}

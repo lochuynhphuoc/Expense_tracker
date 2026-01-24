@@ -182,8 +182,11 @@
                         <td>{{ e.description|default:"-" }}</td>
                         <td>
                             <div class="table-actions">
-                                <a class="btn btn-ghost btn-sm" href="{% url 'edit_expense' e.id %}"><i class='bx bx-edit'></i></a>
-                                <a class="btn btn-ghost btn-sm btn-danger" href="{% url 'delete_expense' e.id %}"><i class='bx bx-trash'></i></a>
+                                <button class="btn btn-ghost btn-sm" type="button" data-open-modal="true" data-modal-url="{% url 'edit_expense' e.id %}?modal=1" data-modal-title="Edit Expense"><i class='bx bx-edit'></i></button>
+                                <form method="post" action="{% url 'delete_expense' e.id %}" class="inline-form" data-confirm="Delete this expense?">
+                                    {% csrf_token %}
+                                    <button class="btn btn-ghost btn-sm btn-danger" type="submit"><i class='bx bx-trash'></i></button>
+                                </form>
                             </div>
                         </td>
                     </tr>

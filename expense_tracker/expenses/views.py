@@ -13,6 +13,8 @@ from .forms import ExpenseForm, CATEGORY_GROUPS, CURRENCY_CHOICES
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
+from django.views.decorators.clickjacking import xframe_options_sameorigin
+from django.db.models.functions import TruncMonth
 
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
@@ -39,6 +41,7 @@ def register(request):
     return render(request, 'registration/register.html', {'form': form})
 
 @login_required
+@xframe_options_sameorigin
 def add_expense(request):
     form = ExpenseForm(request.POST or None, user=request.user)
     if form.is_valid():
@@ -46,6 +49,18 @@ def add_expense(request):
         expense.user = request.user
         expense.save()
         messages.success(request, 'Expense added successfully.')
+        if request.GET.get('modal') == '1':
+            return HttpResponse(
+                """
+                <html><body>
+                <script>
+                window.parent.postMessage('close-expense-modal', '*');
+                window.parent.location.reload();
+                </script>
+                </body></html>
+                """,
+                content_type='text/html'
+            )
         return redirect('expense_list')
     return render(request, 'expenses/add_expense.html', {'form': form})
 
@@ -101,11 +116,11 @@ def _apply_filters(request, base_qs):
     except (InvalidOperation, ValueError):
         pass
 
-    order_by = ['-date']
+    order_by = ['-date', '-id']
     if amount_sort == 'asc':
-        order_by = ['amount', '-date']
+        order_by = ['amount', '-date', '-id']
     elif amount_sort == 'desc':
-        order_by = ['-amount', '-date']
+        order_by = ['-amount', '-date', '-id']
 
     return {
         'period_qs': period_qs,
@@ -283,12 +298,82 @@ def export_expenses(request):
 
 
 @login_required
+def profile_view(request):
+    base_qs = Expense.objects.filter(user=request.user)
+    total_transactions = base_qs.count()
+    total_amount = base_qs.aggregate(total=Sum('amount'))['total'] or 0
+
+    months = (
+        base_qs.annotate(month=TruncMonth('date'))
+        .values('month')
+        .distinct()
+        .count()
+    )
+    avg_monthly = (total_amount / months) if months else 0
+
+    top_category_row = (
+        base_qs.values('category__name')
+        .annotate(total=Sum('amount'))
+        .order_by('-total')
+        .first()
+    )
+    top_category = top_category_row['category__name'] if top_category_row else None
+
+    spending_profile = 'Balanced'
+    if avg_monthly and avg_monthly < 3000000:
+        spending_profile = 'Saver'
+    elif avg_monthly and avg_monthly > 8000000:
+        spending_profile = 'Spender'
+
+    profile_explain = {
+        'Saver': 'You keep monthly spending consistently low.',
+        'Balanced': 'You maintain a steady spending rhythm.',
+        'Spender': 'You spend above the typical monthly range.',
+    }[spending_profile]
+
+    insight = 'You tend to spend more toward the end of the month.'
+    if total_transactions < 5:
+        insight = 'Add more transactions to unlock deeper insights.'
+
+    context = {
+        'total_transactions': total_transactions,
+        'total_amount': total_amount,
+        'avg_monthly': avg_monthly,
+        'top_category': top_category,
+        'spending_profile': spending_profile,
+        'profile_explain': profile_explain,
+        'insight': insight,
+    }
+    return render(request, 'expenses/profile.html', context)
+
+
+@login_required
+def settings_view(request):
+    if request.method == 'POST':
+        messages.success(request, 'Settings saved.')
+    return render(request, 'expenses/settings.html')
+
+
+@login_required
+@xframe_options_sameorigin
 def edit_expense(request, pk):
     expense = get_object_or_404(Expense, pk=pk, user=request.user)
     form = ExpenseForm(request.POST or None, instance=expense, user=request.user)
     if form.is_valid():
         form.save()
         messages.success(request, 'Expense updated successfully.')
+        if request.GET.get('modal') == '1':
+            return HttpResponse(
+                """
+                <html><body>
+                <script>
+                window.parent.postMessage('close-expense-modal', '*');
+                window.parent.location.reload();
+                </script>
+                </body></html>
+                """,
+                content_type='text/html'
+            )
         return redirect('expense_list')
     return render(request, 'expenses/edit_expense.html', {'form': form, 'expense': expense})
 
@@ -300,4 +385,4 @@ def delete_expense(request, pk):
         expense.delete()
         messages.success(request, 'Expense deleted successfully.')
         return redirect('expense_list')
-    return render(request, 'expenses/delete_expense.html', {'expense': expense})
+    return redirect('expense_list')
