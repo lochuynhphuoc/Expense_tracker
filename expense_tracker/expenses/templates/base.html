@@ -138,11 +138,24 @@
     <script>
         (function () {
             const navExpenses = document.querySelector('[data-nav-expenses="true"]');
-            const overviewLink = document.querySelector('.nav-center .nav-link.active');
-            if (navExpenses && window.location.hash === '#expense-table') {
-                if (overviewLink) overviewLink.classList.remove('active');
-                navExpenses.classList.add('active');
+            const overviewLink = document.querySelector('.nav-center .nav-link');
+            const setActive = () => {
+                if (!navExpenses || !overviewLink) return;
+                if (window.location.hash === '#expense-table') {
+                    overviewLink.classList.remove('active');
+                    navExpenses.classList.add('active');
+                } else {
+                    navExpenses.classList.remove('active');
+                    overviewLink.classList.add('active');
+                }
+            };
+            if (navExpenses) {
+                navExpenses.addEventListener('click', () => {
+                    setTimeout(setActive, 0);
+                });
             }
+            window.addEventListener('hashchange', setActive);
+            setActive();
         })();
     </script>
 
