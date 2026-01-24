@@ -40,49 +40,76 @@
     </div>
 </section>
 
-<!-- Analysis Chart -->
-<section class="dashboard-row">
+<!-- Insights -->
+<section class="insight-card reveal">
+    <h3><i class='bx bx-bulb'></i> Smart insights</h3>
+    <ul>
+        {% for item in insights %}
+            <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+</section>
+
+<!-- Analysis Charts -->
+<section class="charts-row">
     <div class="chart-section reveal">
         <div class="chart-header">
             <div>
-                <h3><i class='bx bxs-bar-chart-alt-2'></i> Top Categories Analysis</h3>
-                <div class="helper">Spending breakdown by category (Top 8) • {{ chart_currency }}</div>
+                <h3><i class='bx bxs-pie-chart-alt-2'></i> Category Split</h3>
+                <div class="helper">Pie by category (Top 8) • {{ chart_currency }}</div>
             </div>
         </div>
-        <div style="position: relative; height: 280px; width: 100%;">
-            <canvas id="categoryChart"></canvas>
+        <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="categoryPieChart"></canvas>
         </div>
     </div>
-
-    <section class="table-wrap reveal" id="expense-table">
-        <div class="table-toolbar">
-            <div class="toolbar-group">
-                <form method="get" class="toolbar-form">
-                    <input type="hidden" name="date_mode" value="{{ date_mode }}">
-                    <input type="hidden" name="day" value="{{ day }}">
-                    <input type="hidden" name="month" value="{{ month }}">
-                    <input type="hidden" name="year" value="{{ year }}">
-                    <input type="hidden" name="category_group" value="{{ category_group }}">
-                    <input type="hidden" name="amount_sort" value="{{ amount_sort }}">
-
-                    <input type="text" name="q" class="mini-input search-input" placeholder="Search note/category" value="{{ q }}">
-                    <input type="text" name="amount_min" class="mini-input amount-input" placeholder="Min" value="{{ amount_min }}">
-                    <input type="text" name="amount_max" class="mini-input amount-input" placeholder="Max" value="{{ amount_max }}">
-                    <select name="currency" class="mini-select" aria-label="Currency">
-                        <option value="">All currencies</option>
-                        {% for code, label in currency_choices %}
-                            <option value="{{ code }}" {% if currency == code %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit" class="mini-btn"><i class='bx bx-filter-alt'></i> Apply</button>
-                    <a class="mini-btn" href="?" data-reset-scroll="true"><i class='bx bx-refresh'></i> Reset</a>
-                </form>
+    <div class="chart-section reveal">
+        <div class="chart-header">
+            <div>
+                <h3><i class='bx bx-line-chart'></i> Spending Over Time</h3>
+                <div class="helper" id="time-series-helper">Last 7 days • {{ chart_currency }}</div>
             </div>
-            <div class="toolbar-group">
-                <a class="mini-btn" href="{% url 'export_expenses' %}?date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}&amount_sort={{ amount_sort }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}"><i class='bx bx-download'></i> Export CSV</a>
+            <div class="chart-range">
+                <button class="mini-btn chart-range-btn active" type="button" data-range="7">7d</button>
+                <button class="mini-btn chart-range-btn" type="button" data-range="14">14d</button>
+                <button class="mini-btn chart-range-btn" type="button" data-range="30">30d</button>
             </div>
         </div>
-        <table class="table">
+        <div style="position: relative; height: 220px; width: 100%;">
+            <canvas id="timeSeriesChart"></canvas>
+        </div>
+    </div>
+</section>
+
+<section class="table-wrap reveal" id="expense-table">
+    <div class="table-toolbar">
+        <div class="toolbar-group">
+            <form method="get" class="toolbar-form">
+                <input type="hidden" name="date_mode" value="{{ date_mode }}">
+                <input type="hidden" name="day" value="{{ day }}">
+                <input type="hidden" name="month" value="{{ month }}">
+                <input type="hidden" name="year" value="{{ year }}">
+                <input type="hidden" name="category_group" value="{{ category_group }}">
+                <input type="hidden" name="amount_sort" value="{{ amount_sort }}">
+
+                <input type="text" name="q" class="mini-input search-input" placeholder="Search note/category" value="{{ q }}">
+                <input type="text" name="amount_min" class="mini-input amount-input" placeholder="Min" value="{{ amount_min }}">
+                <input type="text" name="amount_max" class="mini-input amount-input" placeholder="Max" value="{{ amount_max }}">
+                <select name="currency" class="mini-select" aria-label="Currency">
+                    <option value="">All currencies</option>
+                    {% for code, label in currency_choices %}
+                        <option value="{{ code }}" {% if currency == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="mini-btn"><i class='bx bx-filter-alt'></i> Apply</button>
+                <a class="mini-btn" href="?" data-reset-scroll="true"><i class='bx bx-refresh'></i> Reset</a>
+            </form>
+        </div>
+        <div class="toolbar-group">
+            <a class="mini-btn" href="{% url 'export_expenses' %}?date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}&amount_sort={{ amount_sort }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}"><i class='bx bx-download'></i> Export CSV</a>
+        </div>
+    </div>
+    <table class="table">
         <thead>
             <tr>
                 <th><i class='bx bx-calendar'></i> Date</th>
@@ -187,104 +214,156 @@
     {% endif %}
 </section>
 
-</section>
-
 {{ chart_labels|json_script:"chart-labels" }}
 {{ chart_values|json_script:"chart-values" }}
+{{ time_series_data|json_script:"time-series" }}
 
 <script>
     (function () {
-        const labels = JSON.parse(document.getElementById('chart-labels').textContent || '[]');
-        const values = JSON.parse(document.getElementById('chart-values').textContent || '[]');
-        const canvas = document.getElementById('categoryChart');
-        if (!canvas) return;
+        const pieLabels = JSON.parse(document.getElementById('chart-labels').textContent || '[]');
+        const pieValues = JSON.parse(document.getElementById('chart-values').textContent || '[]');
+        const timeSeriesData = JSON.parse(document.getElementById('time-series').textContent || '{}');
 
-        const renderChart = () => {
+        const pieCanvas = document.getElementById('categoryPieChart');
+        const timeCanvas = document.getElementById('timeSeriesChart');
+        if (!pieCanvas && !timeCanvas) return;
+
+        const renderCharts = () => {
             if (!window.Chart) return;
             const styles = getComputedStyle(document.body);
             const muted = styles.getPropertyValue('--muted').trim() || '#9ca3af';
             const border = styles.getPropertyValue('--border').trim() || 'rgba(148, 163, 184, 0.15)';
             const accent = styles.getPropertyValue('--accent').trim() || '#2dd4bf';
-            
-            const ctx = canvas.getContext('2d');
-            
-            // Create gradient
-            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, 'rgba(45, 212, 191, 0.5)'); // brand accent
-            gradient.addColorStop(1, 'rgba(45, 212, 191, 0.1)');
+            const accent2 = styles.getPropertyValue('--accent-2').trim() || '#60a5fa';
 
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [
-                        {
-                            label: '{{ chart_currency }}',
-                            data: values,
-                            backgroundColor: gradient,
-                            borderColor: accent,
+            if (pieCanvas) {
+                const pieCtx = pieCanvas.getContext('2d');
+                new Chart(pieCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: pieLabels,
+                        datasets: [{
+                            data: pieValues,
+                            backgroundColor: [
+                                '#2dd4bf', '#60a5fa', '#f59e0b', '#f97316',
+                                '#a855f7', '#ec4899', '#22c55e', '#38bdf8'
+                            ],
                             borderWidth: 1,
-                            borderRadius: 6,
-                            barThickness: 'flex',
-                            maxBarThickness: 50,
+                            borderColor: border,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: muted, boxWidth: 10, padding: 12, font: { size: 11 } }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                padding: 10,
+                                titleFont: { size: 12 },
+                                bodyFont: { size: 12, weight: 'bold' },
+                                cornerRadius: 8,
+                            }
                         },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            padding: 12,
-                            titleFont: { size: 13 },
-                            bodyFont: { size: 13, weight: 'bold' },
-                            cornerRadius: 8,
-                            displayColors: false,
+                        cutout: '60%'
+                    }
+                });
+            }
+
+            if (timeCanvas) {
+                const timeCtx = timeCanvas.getContext('2d');
+                const gradient = timeCtx.createLinearGradient(0, 0, 0, 220);
+                gradient.addColorStop(0, 'rgba(96, 165, 250, 0.35)');
+                gradient.addColorStop(1, 'rgba(96, 165, 250, 0.05)');
+
+                const defaultRange = '7';
+                const initialSeries = timeSeriesData[defaultRange] || { labels: [], values: [] };
+                const helper = document.getElementById('time-series-helper');
+                const rangeButtons = document.querySelectorAll('.chart-range-btn');
+
+                const timeChart = new Chart(timeCtx, {
+                    type: 'line',
+                    data: {
+                        labels: initialSeries.labels,
+                        datasets: [{
+                            label: '{{ chart_currency }}',
+                            data: initialSeries.values,
+                            borderColor: accent2,
+                            backgroundColor: gradient,
+                            fill: true,
+                            tension: 0.35,
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            pointHoverRadius: 4,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                padding: 10,
+                                titleFont: { size: 12 },
+                                bodyFont: { size: 12, weight: 'bold' },
+                                cornerRadius: 8,
+                                displayColors: false,
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: muted, font: { size: 10 } },
+                                grid: { display: false },
+                            },
+                            y: {
+                                ticks: {
+                                    color: muted,
+                                    font: { size: 10 },
+                                    callback: function(value) {
+                                        if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
+                                        if (value >= 1000) return (value/1000).toFixed(0) + 'k';
+                                        return value;
+                                    }
+                                },
+                                grid: { color: border, borderDash: [4, 4], drawBorder: false },
+                                beginAtZero: true
+                            }
                         }
-                    },
-                    scales: {
-                        x: {
-                            ticks: { 
-                                color: muted, 
-                                font: { size: 11 },
-                                maxRotation: 45, 
-                                autoSkip: false
-                            },
-                            grid: { display: false },
-                        },
-                        y: {
-                            ticks: { 
-                                color: muted, 
-                                font: { size: 11 },
-                                precision: 0,
-                                callback: function(value) {
-                                    if (value >= 1000000) return (value/1000000).toFixed(1) + 'M';
-                                    if (value >= 1000) return (value/1000).toFixed(0) + 'k';
-                                    return value;
-                                }
-                            },
-                            grid: { 
-                                color: border,
-                                borderDash: [4, 4],
-                                drawBorder: false,
-                            },
-                            beginAtZero: true
-                        },
-                    },
-                },
-            });
+                    }
+                });
+
+                const setRange = (range) => {
+                    const series = timeSeriesData[range];
+                    if (!series) return;
+                    timeChart.data.labels = series.labels;
+                    timeChart.data.datasets[0].data = series.values;
+                    timeChart.update();
+                    if (helper) {
+                        helper.textContent = `Last ${range} days • {{ chart_currency }}`;
+                    }
+                    rangeButtons.forEach((btn) => {
+                        btn.classList.toggle('active', btn.dataset.range === range);
+                    });
+                };
+
+                rangeButtons.forEach((btn) => {
+                    btn.addEventListener('click', () => setRange(btn.dataset.range));
+                });
+            }
         };
 
         window.addEventListener('load', () => {
             if (window.Chart) {
-                renderChart();
+                renderCharts();
                 return;
             }
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-            script.onload = renderChart;
+            script.onload = renderCharts;
             document.body.appendChild(script);
         });
     })();

@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Q
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from django.core.paginator import Paginator
 from django.http import HttpResponse
@@ -170,6 +170,59 @@ def expense_list(request):
     chart_labels = [display_label(row['category__name']) for row in chart_rows]
     chart_values = [float(row['total'] or 0) for row in chart_rows]
 
+    def build_time_series(days):
+        end_date = today
+        start_date = end_date - timedelta(days=days - 1)
+        timeline_days = [start_date + timedelta(days=i) for i in range(days)]
+
+        time_rows = (
+            chart_qs.filter(date__range=(start_date, end_date))
+            .values('date')
+            .annotate(total=Sum('amount'))
+            .order_by('date')
+        )
+        time_map = {row['date']: float(row['total'] or 0) for row in time_rows}
+        return {
+            'labels': [d.strftime('%d/%m') for d in timeline_days],
+            'values': [time_map.get(d, 0) for d in timeline_days],
+        }
+
+    time_series_data = {
+        '7': build_time_series(7),
+        '14': build_time_series(14),
+        '30': build_time_series(30),
+    }
+
+    end_date = today
+    week_start = end_date - timedelta(days=6)
+    prev_week_start = week_start - timedelta(days=7)
+    prev_week_end = week_start - timedelta(days=1)
+
+    week_total = chart_qs.filter(date__range=(week_start, end_date)).aggregate(total=Sum('amount'))['total'] or 0
+    prev_week_total = chart_qs.filter(date__range=(prev_week_start, prev_week_end)).aggregate(total=Sum('amount'))['total'] or 0
+
+    insights = []
+    if week_total or prev_week_total:
+        if prev_week_total:
+            delta = ((week_total - prev_week_total) / prev_week_total) * 100
+            trend = 'tăng' if delta > 0 else 'giảm'
+            insights.append(f"Tuần này bạn chi {int(week_total):,} {chart_currency}, {trend} {abs(delta):.0f}% so với tuần trước.")
+        else:
+            insights.append(f"Tuần này bạn chi {int(week_total):,} {chart_currency}, tuần trước chưa có dữ liệu.")
+
+    total_in_range = chart_qs.aggregate(total=Sum('amount'))['total'] or 0
+    if total_in_range:
+        top_row = chart_qs.values('category__name').annotate(total=Sum('amount')).order_by('-total').first()
+        if top_row:
+            share = (top_row['total'] / total_in_range) * 100
+            top_label = display_label(top_row['category__name'])
+            if share >= 40:
+                insights.append(f"Chi tiêu đang lệch vào '{top_label}' ({share:.0f}%). Cân nhắc cắt bớt nếu không thật sự cần.")
+            elif share >= 25:
+                insights.append(f"'{top_label}' đang chiếm {share:.0f}% tổng chi. Giữ mắt ở mục này nhé.")
+    if not insights:
+        insights.append("Chưa đủ dữ liệu để phân tích. Hãy thêm vài khoản chi nữa nhé.")
+
     category_groups_with_counts = []
     for group in CATEGORY_GROUPS.keys():
         count = filters['period_qs'].filter(category__name__startswith=f"{group} - ").count()
@@ -199,6 +252,8 @@ def expense_list(request):
         'chart_labels': chart_labels,
         'chart_values': chart_values,
         'chart_currency': chart_currency,
+        'time_series_data': time_series_data,
+        'insights': insights,
     }
     return render(request, 'expenses/expense_list.html', context)
 

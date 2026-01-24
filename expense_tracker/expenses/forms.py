@@ -88,6 +88,27 @@ CURRENCY_CHOICES = [
     ('KRW', 'KRW'),
 ]
 
+CATEGORY_KEYWORDS = {
+    'Thực phẩm - Đồ uống - Bánh và đồ uống': [
+        'highlands', 'starbucks', 'coffee', 'cafe', 'trà sữa', 'sua', 'tea', 'matcha', 'latte'
+    ],
+    'Thực phẩm - Đồ uống - Nhà hàng quán ăn': [
+        'ăn', 'an', 'cơm', 'com', 'bún', 'bun', 'phở', 'pho', 'nhà hàng', 'quán', 'restaurant', 'food'
+    ],
+    'Đi lại & Giao thông - Phương tiện đi lại': [
+        'grab', 'uber', 'taxi', 'bus', 'xe buýt', 'xe buyt', 'xe ôm', 'xăng', 'xang', 'đổ xăng'
+    ],
+    'Mua sắm - Siêu thị/TTTM': [
+        'siêu thị', 'sieu thi', 'coop', 'vinmart', 'lotte', 'aeon', 'mm mega'
+    ],
+    'Sức khoẻ & Làm đẹp - Dược phẩm & y tế': [
+        'thuốc', 'thuoc', 'pharmacy', 'nhà thuốc', 'drug', 'y tế', 'y te'
+    ],
+    'Sức khoẻ & Làm đẹp - Khám chữa bệnh': [
+        'khám', 'kham', 'bệnh viện', 'benh vien', 'clinic', 'doctor'
+    ],
+}
+
 
 def seed_default_categories(user):
     for group, items in CATEGORY_GROUPS.items():
@@ -152,6 +173,14 @@ class ExpenseForm(forms.ModelForm):
             return category
         if not self.user:
             return category
+
+        description = (self.cleaned_data.get('description') or '').lower()
+        if description:
+            for category_name, keywords in CATEGORY_KEYWORDS.items():
+                if any(keyword in description for keyword in keywords):
+                    matched, _ = Category.objects.get_or_create(user=self.user, name=category_name)
+                    return matched
+
         default_name = 'Khác - Chưa phân loại'
         category, _ = Category.objects.get_or_create(user=self.user, name=default_name)
         return category

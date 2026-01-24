@@ -13,32 +13,43 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="{% static 'expenses/styles.css' %}">
 </head>
-<body class="app-body" data-theme="dark">
+<body class="app-body{% if request.GET.modal == '1' %} is-modal{% endif %}" data-theme="dark">
     <header class="app-header">
-        <div class="container header-inner">
-            <div class="brand">
-                <div class="logo">
-                    <img src="{% static 'expenses/logo.png' %}" alt="Logo">
-                    <!-- <i class='bx bxs-wallet-alt' style="font-size: 32px; color: var(--primary);"></i> -->
-                </div>
-                <div>
-                    <div class="brand-title">MoneyFlow</div>
-                    <div class="brand-subtitle">Track smarter. Spend better.</div>
-                </div>
+        <div class="container header-inner nav-shell">
+            <div class="nav-left">
+                <a href="{% url 'expense_list' %}" class="brand-link" data-reset-scroll="true">
+                    <span class="logo">
+                        <img src="{% static 'expenses/logo.png' %}" alt="Logo">
+                    </span>
+                    <span class="brand-text">MoneyFlow</span>
+                </a>
             </div>
-            <nav class="nav">
-                <a href="{% url 'expense_list' %}" class="nav-link" data-reset-scroll="true"><i class='bx bxs-dashboard'></i> Overview</a>
-                <a href="{% url 'add_expense' %}" class="nav-link nav-primary"><i class='bx bx-plus'></i> Add Expense</a>
-                <button id="theme-toggle" class="nav-link nav-toggle" type="button" aria-label="Toggle theme"><i class='bx bx-moon'></i></button>
-                <div class="nav-time"><i class='bx bx-time'></i> <span id="current-datetime">{% now "d/m/Y H:i" %}</span></div>
-                {% if request.user.is_authenticated %}
-                    <div class="nav-user"><i class='bx bx-user'></i> {{ request.user.username }}</div>
-                    <a href="{% url 'logout' %}" class="nav-link"><i class='bx bx-log-out'></i> Logout</a>
-                {% else %}
-                    <a href="{% url 'login' %}" class="nav-link"><i class='bx bx-log-in'></i> Login</a>
-                    <a href="{% url 'register' %}" class="nav-link nav-primary"><i class='bx bx-user-plus'></i> Sign Up</a>
-                {% endif %}
+
+            <nav class="nav-center" aria-label="Primary">
+                <a href="{% url 'expense_list' %}" class="nav-link{% if request.path == '/' %} active{% endif %}" data-reset-scroll="true">Overview</a>
+                <a href="{% url 'expense_list' %}#expense-table" class="nav-link" data-reset-scroll="true" data-nav-expenses="true">Expenses</a>
             </nav>
+
+            <div class="nav-right">
+                <button id="theme-toggle" class="nav-link nav-toggle" type="button" aria-label="Toggle theme"><i class='bx bx-moon'></i></button>
+                {% if request.user.is_authenticated %}
+                    <button id="open-expense-modal" class="btn btn-primary nav-cta" type="button">Add Expense</button>
+                    <div class="user-menu">
+                        <button id="user-menu-toggle" class="user-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+                            <span class="avatar"><i class='bx bx-user'></i></span>
+                            <span class="username">{{ request.user.username }}</span>
+                        </button>
+                        <div class="user-dropdown" role="menu" aria-label="User menu">
+                            <a class="dropdown-item" href="#" role="menuitem">Profile</a>
+                            <a class="dropdown-item" href="#" role="menuitem">Settings</a>
+                            <a class="dropdown-item" href="{% url 'logout' %}" role="menuitem">Logout</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'login' %}" class="nav-link">Login</a>
+                    <a href="{% url 'register' %}" class="btn btn-primary nav-cta" style="text-decoration: none;">Sign Up</a>
+                {% endif %}
+            </div>
         </div>
     </header>
 
@@ -96,24 +107,73 @@
             }
         })();
     </script>
+    <div class="modal" id="expense-modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal="true"></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-label="Add expense">
+            <div class="modal-header">
+                <h3>Add Expense</h3>
+                <button class="mini-btn" type="button" data-close-modal="true">Close</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="expense-modal-frame" title="Add expense form" loading="lazy"></iframe>
+            </div>
+        </div>
+    </div>
+
     <script>
         (function () {
-            const el = document.getElementById('current-datetime');
-            if (!el) return;
-            const formatter = new Intl.DateTimeFormat('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false,
+            const navExpenses = document.querySelector('[data-nav-expenses="true"]');
+            const overviewLink = document.querySelector('.nav-center .nav-link.active');
+            if (navExpenses && window.location.hash === '#expense-table') {
+                if (overviewLink) overviewLink.classList.remove('active');
+                navExpenses.classList.add('active');
+            }
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const toggle = document.getElementById('user-menu-toggle');
+            const menu = document.querySelector('.user-menu');
+            if (!toggle || !menu) return;
+            const closeMenu = () => menu.classList.remove('open');
+            toggle.addEventListener('click', (event) => {
+                event.stopPropagation();
+                menu.classList.toggle('open');
+                toggle.setAttribute('aria-expanded', menu.classList.contains('open'));
             });
-            const tick = () => {
-                el.textContent = formatter.format(new Date()).replace(',', '');
+            document.addEventListener('click', closeMenu);
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') closeMenu();
+            });
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const openBtn = document.getElementById('open-expense-modal');
+            const modal = document.getElementById('expense-modal');
+            const frame = document.getElementById('expense-modal-frame');
+            if (!openBtn || !modal || !frame) return;
+            const openModal = () => {
+                frame.src = '{% url "add_expense" %}?modal=1';
+                modal.classList.add('open');
+                modal.setAttribute('aria-hidden', 'false');
             };
-            tick();
-            setInterval(tick, 1000);
+            const closeModal = () => {
+                modal.classList.remove('open');
+                modal.setAttribute('aria-hidden', 'true');
+                frame.src = 'about:blank';
+            };
+            openBtn.addEventListener('click', openModal);
+            modal.querySelectorAll('[data-close-modal="true"]').forEach((el) => {
+                el.addEventListener('click', closeModal);
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && modal.classList.contains('open')) {
+                    closeModal();
+                }
+            });
         })();
     </script>
 </body>
