@@ -24,15 +24,10 @@
         <div class="helper">Total expenses for {% now "F" %}</div>
     </div>
     <div class="kpi-card reveal">
-        <h3><i class='bx bx-target-lock'></i> Total in Current View</h3>
-        <div class="value">{{ filtered_total_vnd|floatformat:0|intcomma }} VNĐ</div>
-        <div class="helper">Based on applied filters (VND only)</div>
-    </div>
-    <div class="kpi-card reveal">
         <h3><i class='bx bx-trending-up'></i> Biggest Expense</h3>
-        {% if max_expense %}
-            <div class="value">{{ max_expense.amount|floatformat:0|intcomma }} {{ max_expense.currency }}</div>
-            <div class="helper">{{ max_expense.category_label }}</div>
+        {% if max_category %}
+            <div class="value">{{ max_category.total|floatformat:0|intcomma }} {{ max_category.currency }}</div>
+            <div class="helper">{{ max_category.label }}</div>
         {% else %}
             <div class="value">0</div>
             <div class="helper">No expenses yet</div>
@@ -91,6 +86,7 @@
                 <input type="hidden" name="year" value="{{ year }}">
                 <input type="hidden" name="category_group" value="{{ category_group }}">
                 <input type="hidden" name="amount_sort" value="{{ amount_sort }}">
+                <input type="hidden" name="page_size" value="{{ page_size }}">
 
                 <input type="text" name="q" class="mini-input search-input" placeholder="Search note/category" value="{{ q }}">
                 <input type="text" name="amount_min" class="mini-input amount-input" placeholder="Min" value="{{ amount_min }}">
@@ -101,11 +97,18 @@
                         <option value="{{ code }}" {% if currency == code %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
+                <select name="page_size" class="mini-select" aria-label="Results per page">
+                    <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+                    <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+                    <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+                </select>
                 <button type="submit" class="mini-btn"><i class='bx bx-filter-alt'></i> Apply</button>
                 <a class="mini-btn" href="?" data-reset-scroll="true"><i class='bx bx-refresh'></i> Reset</a>
             </form>
         </div>
         <div class="toolbar-group">
+            <div class="helper">{{ filtered_count }} results</div>
             <a class="mini-btn" href="{% url 'export_expenses' %}?date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}&amount_sort={{ amount_sort }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}"><i class='bx bx-download'></i> Export CSV</a>
         </div>
     </div>
@@ -118,8 +121,8 @@
                     <div class="amount-header">
                         <span><i class='bx bx-dollar-circle'></i> Amount</span>
                         <div class="amount-sort">
-                            <a class="amount-sort-link {% if amount_sort == 'asc' %}active{% endif %}" href="?amount_sort=asc&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}#expense-table"><i class='bx bx-up-arrow-alt'></i></a>
-                            <a class="amount-sort-link {% if amount_sort == 'desc' %}active{% endif %}" href="?amount_sort=desc&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}#expense-table"><i class='bx bx-down-arrow-alt'></i></a>
+                            <a class="amount-sort-link {% if amount_sort == 'asc' %}active{% endif %}" href="?amount_sort={% if amount_sort == 'asc' %}{% else %}asc{% endif %}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}&page_size={{ page_size }}#expense-table"><i class='bx bx-up-arrow-alt'></i></a>
+                            <a class="amount-sort-link {% if amount_sort == 'desc' %}active{% endif %}" href="?amount_sort={% if amount_sort == 'desc' %}{% else %}desc{% endif %}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}&page_size={{ page_size }}#expense-table"><i class='bx bx-down-arrow-alt'></i></a>
                         </div>
                     </div>
                 </th>
@@ -131,6 +134,11 @@
                     <form method="get" class="header-filter">
                         <input type="hidden" name="category_group" value="{{ category_group }}">
                         <input type="hidden" name="amount_sort" value="{{ amount_sort }}">
+                        <input type="hidden" name="q" value="{{ q }}">
+                        <input type="hidden" name="amount_min" value="{{ amount_min }}">
+                        <input type="hidden" name="amount_max" value="{{ amount_max }}">
+                        <input type="hidden" name="currency" value="{{ currency }}">
+                        <input type="hidden" name="page_size" value="{{ page_size }}">
                         <select name="date_mode" class="mini-select" onchange="this.form.submit()">
                             <option value="">All</option>
                             <option value="day" {% if date_mode == 'day' %}selected{% endif %}>Day</option>
@@ -154,6 +162,11 @@
                         <input type="hidden" name="month" value="{{ month }}">
                         <input type="hidden" name="year" value="{{ year }}">
                         <input type="hidden" name="amount_sort" value="{{ amount_sort }}">
+                        <input type="hidden" name="q" value="{{ q }}">
+                        <input type="hidden" name="amount_min" value="{{ amount_min }}">
+                        <input type="hidden" name="amount_max" value="{{ amount_max }}">
+                        <input type="hidden" name="currency" value="{{ currency }}">
+                        <input type="hidden" name="page_size" value="{{ page_size }}">
                         <select name="category_group" class="mini-select" onchange="this.form.submit()">
                             <option value="">All</option>
                             {% for group in category_groups_with_counts %}
@@ -162,7 +175,12 @@
                         </select>
                     </form>
                 </th>
-                <th></th>
+                <th>
+                    <div class="amount-cell">
+                        <span class="amount-value">{{ filtered_total_in_view|floatformat:0|intcomma }}</span>
+                        <span class="amount-currency">{{ chart_currency }}</span>
+                    </div>
+                </th>
                 <th></th>
                 <th></th>
             </tr>
@@ -201,7 +219,7 @@
     {% if page_obj.has_other_pages %}
         <div class="pagination">
             {% if page_obj.has_previous %}
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&amount_sort={{ amount_sort }}&category_group={{ category_group }}#expense-table"><i class='bx bx-chevron-left'></i> Prev</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&amount_sort={{ amount_sort }}&category_group={{ category_group }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}&page_size={{ page_size }}#expense-table"><i class='bx bx-chevron-left'></i> Prev</a>
             {% else %}
                 <span class="page-link disabled"><i class='bx bx-chevron-left'></i> Prev</span>
             {% endif %}
@@ -209,7 +227,7 @@
             <span class="page-info">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
 
             {% if page_obj.has_next %}
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&amount_sort={{ amount_sort }}&category_group={{ category_group }}#expense-table">Next <i class='bx bx-chevron-right'></i></a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&amount_sort={{ amount_sort }}&category_group={{ category_group }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}&page_size={{ page_size }}#expense-table">Next <i class='bx bx-chevron-right'></i></a>
             {% else %}
                 <span class="page-link disabled">Next <i class='bx bx-chevron-right'></i></span>
             {% endif %}

@@ -75,6 +75,7 @@ def _apply_filters(request, base_qs):
     amount_min = request.GET.get('amount_min', '').strip()
     amount_max = request.GET.get('amount_max', '').strip()
     currency = request.GET.get('currency', '').strip()
+    page_size = request.GET.get('page_size', '').strip()
 
     period_qs = base_qs
 
@@ -122,6 +123,13 @@ def _apply_filters(request, base_qs):
     elif amount_sort == 'desc':
         order_by = ['-amount', '-date', '-id']
 
+    try:
+        page_size = int(page_size)
+    except (TypeError, ValueError):
+        page_size = 10
+    if page_size not in {10, 25, 50, 100}:
+        page_size = 10
+
     return {
         'period_qs': period_qs,
         'filtered_qs': filtered_qs,
@@ -135,6 +143,7 @@ def _apply_filters(request, base_qs):
         'amount_min': amount_min,
         'amount_max': amount_max,
         'currency': currency,
+        'page_size': page_size,
         'order_by': order_by,
     }
 
@@ -145,7 +154,7 @@ def expense_list(request):
     filters = _apply_filters(request, base_qs)
 
     expenses = filters['filtered_qs'].order_by(*filters['order_by'])
-    paginator = Paginator(expenses, 10)
+    paginator = Paginator(expenses, filters['page_size'])
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -159,14 +168,14 @@ def expense_list(request):
     distinct_days = vnd_in_view.values('date').distinct().count() or 0
     avg_daily_vnd = (filtered_total_vnd / distinct_days) if distinct_days else 0
 
-    max_expense = filters['filtered_qs'].order_by('-amount', '-date').first()
-
     chart_currency = filters['currency'] or 'VND'
     chart_qs = filters['filtered_qs']
     if filters['currency']:
         chart_qs = chart_qs.filter(currency=filters['currency'])
     else:
         chart_qs = chart_qs.filter(currency='VND')
+
+    filtered_total_in_view = chart_qs.aggregate(total=Sum('amount'))['total'] or 0
 
     chart_rows = (
         chart_qs
@@ -184,6 +193,20 @@ def expense_list(request):
 
     chart_labels = [display_label(row['category__name']) for row in chart_rows]
     chart_values = [float(row['total'] or 0) for row in chart_rows]
+
+    top_category_row = (
+        chart_qs.values('category__name')
+        .annotate(total=Sum('amount'))
+        .order_by('-total')
+        .first()
+    )
+    max_category = None
+    if top_category_row:
+        max_category = {
+            'total': top_category_row['total'] or 0,
+            'label': display_label(top_category_row['category__name']),
+            'currency': chart_currency,
+        }
 
     def build_time_series(days):
         end_date = today
@@ -249,9 +272,12 @@ def expense_list(request):
         'total_amount': total_amount,
         'month_total': month_total,
         'filtered_total_vnd': filtered_total_vnd,
+        'filtered_total_in_view': filtered_total_in_view,
         'avg_daily_vnd': avg_daily_vnd,
-        'max_expense': max_expense,
+        'max_category': max_category,
         'count': expenses.count(),
+        'filtered_count': filters['filtered_qs'].count(),
+        'page_size': filters['page_size'],
         'category_group': filters['category_group'],
         'date_mode': filters['date_mode'],
         'day': filters['day'],
