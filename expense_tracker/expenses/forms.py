@@ -218,6 +218,9 @@ class UserSettingsForm(forms.ModelForm):
         language = kwargs.pop('language', 'en')
         super().__init__(*args, **kwargs)
         is_vi = language == 'vi'
+        self.fields['monthly_budget'].widget.attrs.setdefault('placeholder', '0')
+        if self.instance and getattr(self.instance, 'monthly_budget', None) == 0:
+            self.fields['monthly_budget'].initial = ''
         self.fields['week_start'].choices = [
             ('monday', 'Thứ Hai' if is_vi else 'Monday'),
             ('sunday', 'Chủ Nhật' if is_vi else 'Sunday'),

@@ -90,7 +90,10 @@
         </div>
         <div class="form-row">
             <label for="id_monthly_budget">{% if lang == 'vi' %}Ngân sách tháng{% else %}Monthly budget{% endif %}</label>
-            {{ form.monthly_budget }}
+            <div class="input-group budget-input">
+                {{ form.monthly_budget }}
+                <span class="input-addon">VNĐ</span>
+            </div>
         </div>
         <div class="form-row">
             <label for="id_week_start">{% if lang == 'vi' %}Bắt đầu tuần{% else %}Week start{% endif %}</label>
@@ -162,5 +165,41 @@
         <button type="submit" class="btn btn-primary"><i class='bx bx-save'></i> {% if lang == 'vi' %}Lưu cài đặt{% else %}Save settings{% endif %}</button>
     </div>
 </form>
+
+<script>
+    (function () {
+        const budgetInput = document.getElementById('id_monthly_budget');
+        if (!budgetInput) return;
+
+        const formatNumber = (value) => {
+            const normalized = value.replace(/,/g, '').trim();
+            const integerPart = normalized.split('.')[0];
+            const digits = integerPart.replace(/[^0-9]/g, '');
+            if (!digits) return '';
+            return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        };
+
+        budgetInput.value = formatNumber(budgetInput.value);
+        budgetInput.addEventListener('focus', () => {
+            if (budgetInput.value === '0') {
+                budgetInput.value = '';
+            }
+        });
+        budgetInput.addEventListener('input', () => {
+            const cursor = budgetInput.selectionStart;
+            const before = budgetInput.value;
+            budgetInput.value = formatNumber(before);
+            const diff = budgetInput.value.length - before.length;
+            budgetInput.setSelectionRange(cursor + diff, cursor + diff);
+        });
+
+        const form = budgetInput.closest('form');
+        if (form) {
+            form.addEventListener('submit', () => {
+                budgetInput.value = budgetInput.value.replace(/,/g, '');
+            });
+        }
+    })();
+</script>
 {% endblock %}
 {% endwith %}

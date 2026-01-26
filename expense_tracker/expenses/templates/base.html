@@ -102,11 +102,10 @@
             const stored = localStorage.getItem('expense-theme');
             let initial = 'dark';
 
-            if (userTheme && userTheme !== 'system') {
-                initial = userTheme;
-                localStorage.setItem('expense-theme', initial);
-            } else if (stored) {
+            if (stored) {
                 initial = stored;
+            } else if (userTheme && userTheme !== 'system') {
+                initial = userTheme;
             } else {
                 initial = prefersDark ? 'dark' : 'light';
             }

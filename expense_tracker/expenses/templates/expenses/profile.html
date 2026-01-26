@@ -16,7 +16,6 @@
         </div>
         <div class="profile-hero-meta">
             <span class="pill">{% if lang == 'vi' %}Hồ sơ{% else %}Profile{% endif %}</span>
-            <a class="btn btn-ghost" href="{% url 'settings' %}"><i class='bx bx-cog'></i> {% if lang == 'vi' %}Cài đặt{% else %}Settings{% endif %}</a>
         </div>
     </div>
 </section>
@@ -66,28 +65,41 @@
     <div class="card-panel profile-card">
         <div class="card-header settings-header">
             <div>
-                <h2><i class='bx bx-line-chart'></i> {% if lang == 'vi' %}Tổng quan chi tiêu{% else %}Spending Snapshot{% endif %}</h2>
-                <p class="card-subtitle">{% if lang == 'vi' %}Theo dõi nhịp chi tiêu hiện tại.{% else %}Quick view of your current spending rhythm.{% endif %}</p>
+                <h2><i class='bx bx-sliders'></i> {% if lang == 'vi' %}Tùy chỉnh nhanh{% else %}Quick preferences{% endif %}</h2>
+                <p class="card-subtitle">{% if lang == 'vi' %}Xem nhanh các cài đặt quan trọng.{% else %}Snapshot of your most important settings.{% endif %}</p>
             </div>
-            <span class="pill">{% if lang == 'vi' %}Tóm tắt{% else %}Summary{% endif %}</span>
+            <span class="pill">{% if lang == 'vi' %}Nhanh{% else %}Quick{% endif %}</span>
         </div>
-        <div class="stat-list">
-            <div>
-                <div class="stat-label">{% if lang == 'vi' %}Giao dịch{% else %}Transactions{% endif %}</div>
-                <div class="stat-value">{{ total_transactions|intcomma }}</div>
+        <div class="quick-grid">
+            <div class="quick-item">
+                <span class="quick-label">{% if lang == 'vi' %}Giao diện{% else %}Theme{% endif %}</span>
+                <span class="quick-value">
+                    {% if user_settings %}
+                        {% if user_settings.theme == 'system' %}{% if lang == 'vi' %}Theo hệ thống{% else %}System{% endif %}
+                        {% elif user_settings.theme == 'light' %}{% if lang == 'vi' %}Sáng{% else %}Light{% endif %}
+                        {% else %}{% if lang == 'vi' %}Tối{% else %}Dark{% endif %}{% endif %}
+                    {% else %}{% if lang == 'vi' %}Theo hệ thống{% else %}System{% endif %}
+                    {% endif %}
+                </span>
             </div>
-            <div>
-                <div class="stat-label">{% if lang == 'vi' %}Tổng ghi nhận{% else %}Total recorded{% endif %}</div>
-                <div class="stat-value">{{ total_amount|floatformat:0|intcomma }} VND</div>
+            <div class="quick-item">
+                <span class="quick-label">{% if lang == 'vi' %}Ngôn ngữ{% else %}Language{% endif %}</span>
+                <span class="quick-value">{% if user_settings and user_settings.language == 'vi' %}Tiếng Việt{% else %}English{% endif %}</span>
             </div>
-            <div>
-                <div class="stat-label">{% if lang == 'vi' %}TB mỗi tháng{% else %}Avg monthly{% endif %}</div>
-                <div class="stat-value">{{ avg_monthly|floatformat:0|intcomma }} VND</div>
+            <div class="quick-item">
+                <span class="quick-label">{% if lang == 'vi' %}Ngân sách tháng{% else %}Monthly budget{% endif %}</span>
+                <span class="quick-value">{% if user_settings %}{{ user_settings.monthly_budget|floatformat:0|intcomma }} VND{% else %}0 VND{% endif %}</span>
             </div>
-            <div>
-                <div class="stat-label">{% if lang == 'vi' %}Danh mục lớn nhất{% else %}Top category{% endif %}</div>
-                <div class="stat-value">{{ top_category|default:"-" }}</div>
+            <div class="quick-item">
+                <span class="quick-label">{% if lang == 'vi' %}Bắt đầu tuần{% else %}Week start{% endif %}</span>
+                <span class="quick-value">
+                    {% if user_settings and user_settings.week_start == 'sunday' %}{% if lang == 'vi' %}Chủ nhật{% else %}Sunday{% endif %}{% else %}{% if lang == 'vi' %}Thứ hai{% else %}Monday{% endif %}{% endif %}
+                </span>
             </div>
+        </div>
+        <div class="quick-actions">
+            <a class="btn btn-ghost" href="{% url 'settings' %}"><i class='bx bx-cog'></i> {% if lang == 'vi' %}Chỉnh cài đặt{% else %}Open settings{% endif %}</a>
+            <a class="btn btn-primary" href="{% url 'expense_list' %}"><i class='bx bx-plus-circle'></i> {% if lang == 'vi' %}Thêm chi tiêu{% else %}Add expense{% endif %}</a>
         </div>
     </div>
 

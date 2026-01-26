@@ -780,6 +780,21 @@ body[data-theme="light"].app-body {
     color: var(--danger);
 }
 
+.input-addon {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+body[data-theme="light"] .input-addon {
+    background: #ffffff;
+    color: #64748b;
+}
+
 .table-actions {
     display: inline-flex;
     gap: 8px;
@@ -1747,5 +1762,9 @@ body[data-theme="light"] .form-card textarea {
 
     .profile-stats {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .quick-grid {
+        grid-template-columns: 1fr;
     }
 }
