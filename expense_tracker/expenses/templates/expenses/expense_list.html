@@ -1,43 +1,44 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% with lang=user_settings.language|default:'en' %}
 
-{% block title %}Overview • MoneyFlow{% endblock %}
+{% block title %}{% if lang == 'vi' %}Tổng quan{% else %}Overview{% endif %} • MoneyFlow{% endblock %}
 
 {% block content %}
 <section class="hero fade-in">
     <div class="hero-card">
-        <h1 class="hero-title"><i class='bx bxs-pie-chart-alt-2'></i> Your spending overview</h1>
-        <p class="hero-subtitle">Track daily expenses and stay on top of your budget.</p>
+        <h1 class="hero-title"><i class='bx bxs-pie-chart-alt-2'></i> {% if lang == 'vi' %}Tổng quan chi tiêu của bạn{% else %}Your spending overview{% endif %}</h1>
+        <p class="hero-subtitle">{% if lang == 'vi' %}Theo dõi chi tiêu hằng ngày và kiểm soát ngân sách.{% else %}Track daily expenses and stay on top of your budget.{% endif %}</p>
     </div>
 </section>
 
 <!-- KPI Panels -->
 <section class="kpi-grid compact-grid">
     <div class="kpi-card reveal">
-        <h3><i class='bx bxs-wallet'></i> Total Spent (All Time)</h3>
+        <h3><i class='bx bxs-wallet'></i> {% if lang == 'vi' %}Tổng chi (Toàn thời gian){% else %}Total Spent (All Time){% endif %}</h3>
         <div class="value">{{ total_amount|floatformat:0|intcomma }} VNĐ</div>
-        <div class="helper">Lifetime spending across all categories</div>
+        <div class="helper">{% if lang == 'vi' %}Tổng chi mọi danh mục từ trước đến nay{% else %}Lifetime spending across all categories{% endif %}</div>
     </div>
     <div class="kpi-card reveal">
-        <h3><i class='bx bx-calendar-check'></i> Spending This Month</h3>
+        <h3><i class='bx bx-calendar-check'></i> {% if lang == 'vi' %}Chi tiêu tháng này{% else %}Spending This Month{% endif %}</h3>
         <div class="value">{{ month_total|floatformat:0|intcomma }} VNĐ</div>
-        <div class="helper">Total expenses for {% now "F" %}</div>
+        <div class="helper">{% if lang == 'vi' %}Tổng chi trong tháng {% now "F" %}{% else %}Total expenses for {% now "F" %}{% endif %}</div>
     </div>
     <div class="kpi-card reveal">
-        <h3><i class='bx bx-trending-up'></i> Biggest Expense</h3>
+        <h3><i class='bx bx-trending-up'></i> {% if lang == 'vi' %}Khoản chi lớn nhất{% else %}Biggest Expense{% endif %}</h3>
         {% if max_category %}
             <div class="value">{{ max_category.total|floatformat:0|intcomma }} {{ max_category.currency }}</div>
             <div class="helper">{{ max_category.label }}</div>
         {% else %}
             <div class="value">0</div>
-            <div class="helper">No expenses yet</div>
+            <div class="helper">{% if lang == 'vi' %}Chưa có chi tiêu{% else %}No expenses yet{% endif %}</div>
         {% endif %}
     </div>
 </section>
 
 <!-- Insights -->
 <section class="insight-card reveal">
-    <h3><i class='bx bx-bulb'></i> Smart insights</h3>
+    <h3><i class='bx bx-bulb'></i> {% if lang == 'vi' %}Nhận định thông minh{% else %}Smart insights{% endif %}</h3>
     <ul>
         {% for item in insights %}
             <li>{{ item }}</li>
@@ -50,8 +51,8 @@
     <div class="chart-section reveal">
         <div class="chart-header">
             <div>
-                <h3><i class='bx bxs-pie-chart-alt-2'></i> Category Split</h3>
-                <div class="helper">Pie by category (Top 8) • {{ chart_currency }}</div>
+                <h3><i class='bx bxs-pie-chart-alt-2'></i> {% if lang == 'vi' %}Phân bổ theo danh mục{% else %}Category Split{% endif %}</h3>
+                <div class="helper">{% if lang == 'vi' %}Biểu đồ tròn theo danh mục (Top 8) • {{ chart_currency }}{% else %}Pie by category (Top 8) • {{ chart_currency }}{% endif %}</div>
             </div>
         </div>
         <div style="position: relative; height: 260px; width: 100%;">
@@ -61,13 +62,13 @@
     <div class="chart-section reveal">
         <div class="chart-header">
             <div>
-                <h3><i class='bx bx-line-chart'></i> Spending Over Time</h3>
-                <div class="helper" id="time-series-helper">Last 7 days • {{ chart_currency }}</div>
+                <h3><i class='bx bx-line-chart'></i> {% if lang == 'vi' %}Chi tiêu theo thời gian{% else %}Spending Over Time{% endif %}</h3>
+                <div class="helper" id="time-series-helper" data-prefix="{% if lang == 'vi' %}7 ngày gần đây{% else %}Last 7 days{% endif %}">{% if lang == 'vi' %}7 ngày gần đây{% else %}Last 7 days{% endif %} • {{ chart_currency }}</div>
             </div>
             <div class="chart-range">
-                <button class="mini-btn chart-range-btn active" type="button" data-range="7">7d</button>
-                <button class="mini-btn chart-range-btn" type="button" data-range="14">14d</button>
-                <button class="mini-btn chart-range-btn" type="button" data-range="30">30d</button>
+                <button class="mini-btn chart-range-btn active" type="button" data-range="7">{% if lang == 'vi' %}7 ngày{% else %}7d{% endif %}</button>
+                <button class="mini-btn chart-range-btn" type="button" data-range="14">{% if lang == 'vi' %}14 ngày{% else %}14d{% endif %}</button>
+                <button class="mini-btn chart-range-btn" type="button" data-range="30">{% if lang == 'vi' %}30 ngày{% else %}30d{% endif %}</button>
             </div>
         </div>
         <div style="position: relative; height: 220px; width: 100%;">
@@ -88,46 +89,46 @@
                 <input type="hidden" name="amount_sort" value="{{ amount_sort }}">
                 <input type="hidden" name="page_size" value="{{ page_size }}">
 
-                <input type="text" name="q" class="mini-input search-input" placeholder="Search note/category" value="{{ q }}">
-                <input type="text" name="amount_min" class="mini-input amount-input" placeholder="Min" value="{{ amount_min }}">
-                <input type="text" name="amount_max" class="mini-input amount-input" placeholder="Max" value="{{ amount_max }}">
-                <select name="currency" class="mini-select" aria-label="Currency">
-                    <option value="">All currencies</option>
+                <input type="text" name="q" class="mini-input search-input" placeholder="{% if lang == 'vi' %}Tìm ghi chú/danh mục{% else %}Search note/category{% endif %}" value="{{ q }}">
+                <input type="text" name="amount_min" class="mini-input amount-input" placeholder="{% if lang == 'vi' %}Tối thiểu{% else %}Min{% endif %}" value="{{ amount_min }}">
+                <input type="text" name="amount_max" class="mini-input amount-input" placeholder="{% if lang == 'vi' %}Tối đa{% else %}Max{% endif %}" value="{{ amount_max }}">
+                <select name="currency" class="mini-select" aria-label="{% if lang == 'vi' %}Loại tiền{% else %}Currency{% endif %}">
+                    <option value="">{% if lang == 'vi' %}Tất cả loại tiền{% else %}All currencies{% endif %}</option>
                     {% for code, label in currency_choices %}
                         <option value="{{ code }}" {% if currency == code %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
-                <select name="page_size" class="mini-select" aria-label="Results per page">
+                <select name="page_size" class="mini-select" aria-label="{% if lang == 'vi' %}Số kết quả mỗi trang{% else %}Results per page{% endif %}">
                     <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
                     <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
                     <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
                     <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
                 </select>
-                <button type="submit" class="mini-btn"><i class='bx bx-filter-alt'></i> Apply</button>
-                <a class="mini-btn" href="?" data-reset-scroll="true"><i class='bx bx-refresh'></i> Reset</a>
+                <button type="submit" class="mini-btn"><i class='bx bx-filter-alt'></i> {% if lang == 'vi' %}Áp dụng{% else %}Apply{% endif %}</button>
+                <a class="mini-btn" href="?" data-reset-scroll="true"><i class='bx bx-refresh'></i> {% if lang == 'vi' %}Đặt lại{% else %}Reset{% endif %}</a>
             </form>
         </div>
         <div class="toolbar-group">
-            <div class="helper">{{ filtered_count }} results</div>
-            <a class="mini-btn" href="{% url 'export_expenses' %}?date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}&amount_sort={{ amount_sort }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}"><i class='bx bx-download'></i> Export CSV</a>
+            <div class="helper">{{ filtered_count }} {% if lang == 'vi' %}kết quả{% else %}results{% endif %}</div>
+            <a class="mini-btn" href="{% url 'export_expenses' %}?date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}&amount_sort={{ amount_sort }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}"><i class='bx bx-download'></i> {% if lang == 'vi' %}Xuất CSV{% else %}Export CSV{% endif %}</a>
         </div>
     </div>
     <table class="table">
         <thead>
             <tr>
-                <th><i class='bx bx-calendar'></i> Date</th>
-                <th><i class='bx bx-category'></i> Category</th>
+                <th><i class='bx bx-calendar'></i> {% if lang == 'vi' %}Ngày{% else %}Date{% endif %}</th>
+                <th><i class='bx bx-category'></i> {% if lang == 'vi' %}Danh mục{% else %}Category{% endif %}</th>
                 <th>
                     <div class="amount-header">
-                        <span><i class='bx bx-dollar-circle'></i> Amount</span>
+                        <span><i class='bx bx-dollar-circle'></i> {% if lang == 'vi' %}Số tiền{% else %}Amount{% endif %}</span>
                         <div class="amount-sort">
                             <a class="amount-sort-link {% if amount_sort == 'asc' %}active{% endif %}" href="?amount_sort={% if amount_sort == 'asc' %}{% else %}asc{% endif %}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}&page_size={{ page_size }}#expense-table"><i class='bx bx-up-arrow-alt'></i></a>
                             <a class="amount-sort-link {% if amount_sort == 'desc' %}active{% endif %}" href="?amount_sort={% if amount_sort == 'desc' %}{% else %}desc{% endif %}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&category_group={{ category_group }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}&page_size={{ page_size }}#expense-table"><i class='bx bx-down-arrow-alt'></i></a>
                         </div>
                     </div>
                 </th>
-                <th><i class='bx bx-text'></i> Description</th>
-                <th><i class='bx bx-cog'></i> Actions</th>
+                <th><i class='bx bx-text'></i> {% if lang == 'vi' %}Ghi chú{% else %}Description{% endif %}</th>
+                <th><i class='bx bx-cog'></i> {% if lang == 'vi' %}Thao tác{% else %}Actions{% endif %}</th>
             </tr>
             <tr class="filter-row">
                 <th>
@@ -140,10 +141,10 @@
                         <input type="hidden" name="currency" value="{{ currency }}">
                         <input type="hidden" name="page_size" value="{{ page_size }}">
                         <select name="date_mode" class="mini-select" onchange="this.form.submit()">
-                            <option value="">All</option>
-                            <option value="day" {% if date_mode == 'day' %}selected{% endif %}>Day</option>
-                            <option value="month" {% if date_mode == 'month' %}selected{% endif %}>Month</option>
-                            <option value="year" {% if date_mode == 'year' %}selected{% endif %}>Year</option>
+                            <option value="">{% if lang == 'vi' %}Tất cả{% else %}All{% endif %}</option>
+                            <option value="day" {% if date_mode == 'day' %}selected{% endif %}>{% if lang == 'vi' %}Ngày{% else %}Day{% endif %}</option>
+                            <option value="month" {% if date_mode == 'month' %}selected{% endif %}>{% if lang == 'vi' %}Tháng{% else %}Month{% endif %}</option>
+                            <option value="year" {% if date_mode == 'year' %}selected{% endif %}>{% if lang == 'vi' %}Năm{% else %}Year{% endif %}</option>
                         </select>
                         <div class="date-fields" data-mode="{{ date_mode }}">
                             <input name="day" class="mini-input" placeholder="dd" value="{{ day }}" maxlength="2">
@@ -168,7 +169,7 @@
                         <input type="hidden" name="currency" value="{{ currency }}">
                         <input type="hidden" name="page_size" value="{{ page_size }}">
                         <select name="category_group" class="mini-select" onchange="this.form.submit()">
-                            <option value="">All</option>
+                            <option value="">{% if lang == 'vi' %}Tất cả{% else %}All{% endif %}</option>
                             {% for group in category_groups_with_counts %}
                                 <option value="{{ group.name }}" {% if category_group == group.name %}selected{% endif %}>{{ group.name }} ({{ group.count }})</option>
                             {% endfor %}
@@ -200,8 +201,8 @@
                         <td>{{ e.description|default:"-" }}</td>
                         <td>
                             <div class="table-actions">
-                                <button class="btn btn-ghost btn-sm" type="button" data-open-modal="true" data-modal-url="{% url 'edit_expense' e.id %}?modal=1" data-modal-title="Edit Expense"><i class='bx bx-edit'></i></button>
-                                <form method="post" action="{% url 'delete_expense' e.id %}" class="inline-form" data-confirm="Delete this expense?">
+                                <button class="btn btn-ghost btn-sm" type="button" data-open-modal="true" data-modal-url="{% url 'edit_expense' e.id %}?modal=1" data-modal-title="{% if lang == 'vi' %}Sửa chi tiêu{% else %}Edit Expense{% endif %}"><i class='bx bx-edit'></i></button>
+                                <form method="post" action="{% url 'delete_expense' e.id %}" class="inline-form" data-confirm="{% if lang == 'vi' %}Xóa khoản chi này?{% else %}Delete this expense?{% endif %}">
                                     {% csrf_token %}
                                     <button class="btn btn-ghost btn-sm btn-danger" type="submit"><i class='bx bx-trash'></i></button>
                                 </form>
@@ -211,7 +212,7 @@
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="5" class="empty">No expenses yet. Start tracking by adding your first expense.</td>
+                    <td colspan="5" class="empty">{% if lang == 'vi' %}Chưa có chi tiêu. Hãy thêm khoản đầu tiên.{% else %}No expenses yet. Start tracking by adding your first expense.{% endif %}</td>
                 </tr>
             {% endif %}
         </tbody>
@@ -219,17 +220,17 @@
     {% if page_obj.has_other_pages %}
         <div class="pagination">
             {% if page_obj.has_previous %}
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&amount_sort={{ amount_sort }}&category_group={{ category_group }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}&page_size={{ page_size }}#expense-table"><i class='bx bx-chevron-left'></i> Prev</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&amount_sort={{ amount_sort }}&category_group={{ category_group }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}&page_size={{ page_size }}#expense-table"><i class='bx bx-chevron-left'></i> {% if lang == 'vi' %}Trước{% else %}Prev{% endif %}</a>
             {% else %}
-                <span class="page-link disabled"><i class='bx bx-chevron-left'></i> Prev</span>
+                <span class="page-link disabled"><i class='bx bx-chevron-left'></i> {% if lang == 'vi' %}Trước{% else %}Prev{% endif %}</span>
             {% endif %}
 
-            <span class="page-info">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            <span class="page-info">{% if lang == 'vi' %}Trang{% else %}Page{% endif %} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
 
             {% if page_obj.has_next %}
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&amount_sort={{ amount_sort }}&category_group={{ category_group }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}&page_size={{ page_size }}#expense-table">Next <i class='bx bx-chevron-right'></i></a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&date_mode={{ date_mode }}&day={{ day }}&month={{ month }}&year={{ year }}&amount_sort={{ amount_sort }}&category_group={{ category_group }}&q={{ q }}&amount_min={{ amount_min }}&amount_max={{ amount_max }}&currency={{ currency }}&page_size={{ page_size }}#expense-table">{% if lang == 'vi' %}Sau{% else %}Next{% endif %} <i class='bx bx-chevron-right'></i></a>
             {% else %}
-                <span class="page-link disabled">Next <i class='bx bx-chevron-right'></i></span>
+                <span class="page-link disabled">{% if lang == 'vi' %}Sau{% else %}Next{% endif %} <i class='bx bx-chevron-right'></i></span>
             {% endif %}
         </div>
     {% endif %}
@@ -304,6 +305,7 @@
                 const initialSeries = timeSeriesData[defaultRange] || { labels: [], values: [] };
                 const helper = document.getElementById('time-series-helper');
                 const rangeButtons = document.querySelectorAll('.chart-range-btn');
+                const lang = document.body.dataset.lang || 'en';
 
                 const timeChart = new Chart(timeCtx, {
                     type: 'line',
@@ -364,7 +366,9 @@
                     timeChart.data.datasets[0].data = series.values;
                     timeChart.update();
                     if (helper) {
-                        helper.textContent = `Last ${range} days • {{ chart_currency }}`;
+                        helper.textContent = lang === 'vi'
+                            ? `${range} ngày gần đây • {{ chart_currency }}`
+                            : `Last ${range} days • {{ chart_currency }}`;
                     }
                     rangeButtons.forEach((btn) => {
                         btn.classList.toggle('active', btn.dataset.range === range);
@@ -482,3 +486,4 @@
 </script>
 
 {% endblock %}
+{% endwith %}

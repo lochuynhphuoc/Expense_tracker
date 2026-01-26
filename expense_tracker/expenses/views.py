@@ -8,8 +8,8 @@ from decimal import Decimal, InvalidOperation
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 import csv
-from .models import Expense, Category
-from .forms import ExpenseForm, CATEGORY_GROUPS, CURRENCY_CHOICES
+from .models import Expense, Category, UserSettings
+from .forms import ExpenseForm, CATEGORY_GROUPS, CURRENCY_CHOICES, UserSettingsForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView
@@ -20,12 +20,18 @@ class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
 
     def form_valid(self, form):
-        messages.success(self.request, 'Welcome back! You have successfully logged in.')
+        user = form.get_user()
+        settings = UserSettings.objects.filter(user=user).first()
+        lang = settings.language if settings else 'en'
+        message = 'Chào mừng bạn quay lại! Đăng nhập thành công.' if lang == 'vi' else 'Welcome back! You have successfully logged in.'
+        messages.success(self.request, message)
         return super().form_valid(form)
 
 def custom_logout(request):
+    lang = _get_language(request)
     logout(request)
-    messages.info(request, "Thanks for using MoneyFlow. See you soon!")
+    message = 'Cảm ơn bạn đã sử dụng MoneyFlow. Hẹn gặp lại!' if lang == 'vi' else 'Thanks for using MoneyFlow. See you soon!'
+    messages.info(request, message)
     return redirect('login')
 
 def register(request):
@@ -34,11 +40,20 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, 'Successfully registered. Welcome!')
+            lang = _get_language(request)
+            message = 'Đăng ký thành công. Chào mừng bạn!' if lang == 'vi' else 'Successfully registered. Welcome!'
+            messages.success(request, message)
             return redirect('expense_list')
     else:
         form = UserCreationForm()
     return render(request, 'registration/register.html', {'form': form})
+
+
+def _get_language(request):
+    if not request.user.is_authenticated:
+        return 'en'
+    settings = UserSettings.objects.filter(user=request.user).first()
+    return settings.language if settings else 'en'
 
 @login_required
 @xframe_options_sameorigin
@@ -48,7 +63,9 @@ def add_expense(request):
         expense = form.save(commit=False)
         expense.user = request.user
         expense.save()
-        messages.success(request, 'Expense added successfully.')
+        lang = _get_language(request)
+        message = 'Đã thêm chi tiêu.' if lang == 'vi' else 'Expense added successfully.'
+        messages.success(request, message)
         if request.GET.get('modal') == '1':
             return HttpResponse(
                 """
@@ -150,6 +167,8 @@ def _apply_filters(request, base_qs):
 
 @login_required
 def expense_list(request):
+    lang = _get_language(request)
+    is_vi = lang == 'vi'
     base_qs = Expense.objects.filter(user=request.user)
     filters = _apply_filters(request, base_qs)
 
@@ -243,10 +262,18 @@ def expense_list(request):
     if week_total or prev_week_total:
         if prev_week_total:
             delta = ((week_total - prev_week_total) / prev_week_total) * 100
-            trend = 'tăng' if delta > 0 else 'giảm'
-            insights.append(f"Tuần này bạn chi {int(week_total):,} {chart_currency}, {trend} {abs(delta):.0f}% so với tuần trước.")
+            if is_vi:
+                trend = 'tăng' if delta > 0 else 'giảm'
+                insights.append(f"Tuần này bạn chi {int(week_total):,} {chart_currency}, {trend} {abs(delta):.0f}% so với tuần trước.")
+            else:
+                trend = 'up' if delta > 0 else 'down'
+                insights.append(f"You spent {int(week_total):,} {chart_currency} this week, {trend} {abs(delta):.0f}% vs last week.")
         else:
-            insights.append(f"Tuần này bạn chi {int(week_total):,} {chart_currency}, tuần trước chưa có dữ liệu.")
+            insights.append(
+                f"Tuần này bạn chi {int(week_total):,} {chart_currency}, tuần trước chưa có dữ liệu."
+                if is_vi else
+                f"You spent {int(week_total):,} {chart_currency} this week; no data for last week."
+            )
 
     total_in_range = chart_qs.aggregate(total=Sum('amount'))['total'] or 0
     if total_in_range:
@@ -255,11 +282,23 @@ def expense_list(request):
             share = (top_row['total'] / total_in_range) * 100
             top_label = display_label(top_row['category__name'])
             if share >= 40:
-                insights.append(f"Chi tiêu đang lệch vào '{top_label}' ({share:.0f}%). Cân nhắc cắt bớt nếu không thật sự cần.")
+                insights.append(
+                    f"Chi tiêu đang lệch vào '{top_label}' ({share:.0f}%). Cân nhắc cắt bớt nếu không thật sự cần."
+                    if is_vi else
+                    f"Spending is skewed toward '{top_label}' ({share:.0f}%). Consider trimming it."
+                )
             elif share >= 25:
-                insights.append(f"'{top_label}' đang chiếm {share:.0f}% tổng chi. Giữ mắt ở mục này nhé.")
+                insights.append(
+                    f"'{top_label}' đang chiếm {share:.0f}% tổng chi. Giữ mắt ở mục này nhé."
+                    if is_vi else
+                    f"'{top_label}' makes up {share:.0f}% of total spend. Keep an eye on it."
+                )
     if not insights:
-        insights.append("Chưa đủ dữ liệu để phân tích. Hãy thêm vài khoản chi nữa nhé.")
+        insights.append(
+            "Chưa đủ dữ liệu để phân tích. Hãy thêm vài khoản chi nữa nhé."
+            if is_vi else
+            "Not enough data for insights yet. Add a few expenses first."
+        )
 
     category_groups_with_counts = []
     for group in CATEGORY_GROUPS.keys():
@@ -325,6 +364,8 @@ def export_expenses(request):
 
 @login_required
 def profile_view(request):
+    lang = _get_language(request)
+    is_vi = lang == 'vi'
     base_qs = Expense.objects.filter(user=request.user)
     total_transactions = base_qs.count()
     total_amount = base_qs.aggregate(total=Sum('amount'))['total'] or 0
@@ -345,21 +386,40 @@ def profile_view(request):
     )
     top_category = top_category_row['category__name'] if top_category_row else None
 
-    spending_profile = 'Balanced'
+    spending_profile_key = 'balanced'
     if avg_monthly and avg_monthly < 3000000:
-        spending_profile = 'Saver'
+        spending_profile_key = 'saver'
     elif avg_monthly and avg_monthly > 8000000:
-        spending_profile = 'Spender'
+        spending_profile_key = 'spender'
 
-    profile_explain = {
-        'Saver': 'You keep monthly spending consistently low.',
-        'Balanced': 'You maintain a steady spending rhythm.',
-        'Spender': 'You spend above the typical monthly range.',
-    }[spending_profile]
-
-    insight = 'You tend to spend more toward the end of the month.'
-    if total_transactions < 5:
-        insight = 'Add more transactions to unlock deeper insights.'
+    if is_vi:
+        spending_profile = {
+            'saver': 'Tiết kiệm',
+            'balanced': 'Cân bằng',
+            'spender': 'Chi tiêu mạnh',
+        }[spending_profile_key]
+        profile_explain = {
+            'saver': 'Bạn giữ mức chi tiêu hàng tháng khá thấp.',
+            'balanced': 'Bạn duy trì nhịp chi tiêu ổn định.',
+            'spender': 'Bạn chi tiêu cao hơn mức trung bình.',
+        }[spending_profile_key]
+        insight = 'Bạn có xu hướng chi nhiều hơn vào cuối tháng.'
+        if total_transactions < 5:
+            insight = 'Thêm nhiều giao dịch để mở khóa phân tích sâu hơn.'
+    else:
+        spending_profile = {
+            'saver': 'Saver',
+            'balanced': 'Balanced',
+            'spender': 'Spender',
+        }[spending_profile_key]
+        profile_explain = {
+            'saver': 'You keep monthly spending consistently low.',
+            'balanced': 'You maintain a steady spending rhythm.',
+            'spender': 'You spend above the typical monthly range.',
+        }[spending_profile_key]
+        insight = 'You tend to spend more toward the end of the month.'
+        if total_transactions < 5:
+            insight = 'Add more transactions to unlock deeper insights.'
 
     context = {
         'total_transactions': total_transactions,
@@ -375,9 +435,18 @@ def profile_view(request):
 
 @login_required
 def settings_view(request):
+    settings, _ = UserSettings.objects.get_or_create(user=request.user)
     if request.method == 'POST':
-        messages.success(request, 'Settings saved.')
-    return render(request, 'expenses/settings.html')
+        lang = request.POST.get('language', settings.language)
+        form = UserSettingsForm(request.POST, instance=settings, language=lang)
+        if form.is_valid():
+            form.save()
+            message = 'Đã lưu cài đặt.' if lang == 'vi' else 'Settings saved.'
+            messages.success(request, message)
+            return redirect('settings')
+    else:
+        form = UserSettingsForm(instance=settings, language=settings.language)
+    return render(request, 'expenses/settings.html', {'form': form})
 
 
 @login_required
@@ -387,7 +456,9 @@ def edit_expense(request, pk):
     form = ExpenseForm(request.POST or None, instance=expense, user=request.user)
     if form.is_valid():
         form.save()
-        messages.success(request, 'Expense updated successfully.')
+        lang = _get_language(request)
+        message = 'Đã cập nhật chi tiêu.' if lang == 'vi' else 'Expense updated successfully.'
+        messages.success(request, message)
         if request.GET.get('modal') == '1':
             return HttpResponse(
                 """

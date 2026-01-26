@@ -1,40 +1,43 @@
 {% extends 'base.html' %}
+{% with lang=user_settings.language|default:'en' %}
 
-{% block title %}Login • MoneyFlow{% endblock %}
+{% block title %}{% if lang == 'vi' %}Đăng nhập{% else %}Login{% endif %} • MoneyFlow{% endblock %}
 
 {% block content %}
 {% if form.errors %}
 <div class="toast-container">
     <div class="toast error">
-        <strong>Login Failed:</strong> Invalid username or password.
+        <strong>{% if lang == 'vi' %}Đăng nhập thất bại:{% else %}Login Failed:{% endif %}</strong>
+        {% if lang == 'vi' %}Tên đăng nhập hoặc mật khẩu không đúng.{% else %}Invalid username or password.{% endif %}
     </div>
 </div>
 {% endif %}
 
 <section class="form-card">
     <div style="text-align: center; margin-bottom: 24px;">
-        <h2 class="form-title" style="margin-bottom: 8px;"><i class='bx bx-user-check'></i> Welcome back</h2>
-        <p style="color: var(--muted); font-size: 14px; margin: 0;">Login to manage your expenses</p>
+        <h2 class="form-title" style="margin-bottom: 8px;"><i class='bx bx-user-check'></i> {% if lang == 'vi' %}Chào mừng quay lại{% else %}Welcome back{% endif %}</h2>
+        <p style="color: var(--muted); font-size: 14px; margin: 0;">{% if lang == 'vi' %}Đăng nhập để quản lý chi tiêu{% else %}Login to manage your expenses{% endif %}</p>
     </div>
 
     <form method="post" class="form-grid">
         {% csrf_token %}
         <div class="form-field">
-            <label for="id_username"><i class='bx bx-user'></i> Username</label>
+            <label for="id_username"><i class='bx bx-user'></i> {% if lang == 'vi' %}Tên đăng nhập{% else %}Username{% endif %}</label>
             {{ form.username }}
         </div>
         <div class="form-field">
-            <label for="id_password"><i class='bx bx-lock-alt'></i> Password</label>
+            <label for="id_password"><i class='bx bx-lock-alt'></i> {% if lang == 'vi' %}Mật khẩu{% else %}Password{% endif %}</label>
             {{ form.password }}
         </div>
         
         <div class="actions">
-            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;"><i class='bx bx-log-in-circle'></i> Login</button>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;"><i class='bx bx-log-in-circle'></i> {% if lang == 'vi' %}Đăng nhập{% else %}Login{% endif %}</button>
         </div>
 
         <div class="auth-footer">
-            Don't have an account? <a href="{% url 'register' %}">Sign up</a>
+            {% if lang == 'vi' %}Chưa có tài khoản?{% else %}Don't have an account?{% endif %} <a href="{% url 'register' %}">{% if lang == 'vi' %}Đăng ký{% else %}Sign up{% endif %}</a>
         </div>
     </form>
 </section>
 {% endblock %}
+    {% endwith %}

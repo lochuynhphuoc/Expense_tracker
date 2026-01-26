@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
+{% with lang=user_settings.language|default:'en' %}
 
-{% block title %}Register • MoneyFlow{% endblock %}
+{% block title %}{% if lang == 'vi' %}Đăng ký{% else %}Register{% endif %} • MoneyFlow{% endblock %}
 
 {% block content %}
 {% if form.errors %}
 <div class="toast-container">
     <div class="toast error" style="animation-duration: 10s;">
-        <div style="margin-bottom: 6px; font-weight: 600;">Please check the following errors:</div>
+        <div style="margin-bottom: 6px; font-weight: 600;">{% if lang == 'vi' %}Vui lòng kiểm tra các lỗi sau:{% else %}Please check the following errors:{% endif %}</div>
         <ul style="margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.4;">
             {% for field in form %}
                 {% for error in field.errors %}
@@ -25,8 +26,8 @@
 
 <section class="form-card">
     <div style="text-align: center; margin-bottom: 24px;">
-        <h2 class="form-title" style="margin-bottom: 8px;"><i class='bx bx-user-plus'></i> Create an account</h2>
-        <p style="color: var(--muted); font-size: 14px; margin: 0;">Start tracking your budget today</p>
+        <h2 class="form-title" style="margin-bottom: 8px;"><i class='bx bx-user-plus'></i> {% if lang == 'vi' %}Tạo tài khoản{% else %}Create an account{% endif %}</h2>
+        <p style="color: var(--muted); font-size: 14px; margin: 0;">{% if lang == 'vi' %}Bắt đầu theo dõi ngân sách ngay hôm nay{% else %}Start tracking your budget today{% endif %}</p>
     </div>
 
     <form method="post" class="form-grid">
@@ -42,12 +43,13 @@
         {% endfor %}
         
         <div class="actions">
-            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;"><i class='bx bx-check-circle'></i> Sign Up</button>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;"><i class='bx bx-check-circle'></i> {% if lang == 'vi' %}Đăng ký{% else %}Sign Up{% endif %}</button>
         </div>
 
         <div class="auth-footer">
-            Already have an account? <a href="{% url 'login' %}">Log in</a>
+            {% if lang == 'vi' %}Đã có tài khoản?{% else %}Already have an account?{% endif %} <a href="{% url 'login' %}">{% if lang == 'vi' %}Đăng nhập{% else %}Log in{% endif %}</a>
         </div>
     </form>
 </section>
 {% endblock %}
+    {% endwith %}

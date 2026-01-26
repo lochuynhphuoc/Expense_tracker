@@ -1,107 +1,166 @@
 {% extends 'base.html' %}
+{% load humanize %}
+{% with lang=user_settings.language|default:'en' %}
 
-{% block title %}Settings • MoneyFlow{% endblock %}
+{% block title %}{% if lang == 'vi' %}Cài đặt{% else %}Settings{% endif %} • MoneyFlow{% endblock %}
 
 {% block content %}
 <section class="page-header">
     <div>
-        <h1>Settings</h1>
-        <p class="page-subtitle">Control how MoneyFlow behaves.</p>
+        <h1>{% if lang == 'vi' %}Cài đặt{% else %}Settings{% endif %}</h1>
+        <p class="page-subtitle">{% if lang == 'vi' %}Tuỳ chỉnh cách MoneyFlow hoạt động.{% else %}Control how MoneyFlow behaves.{% endif %}</p>
     </div>
 </section>
 
-<form method="post" class="settings-grid">
+<section class="settings-hero">
+    <div class="settings-hero__content">
+        <div class="pill">{% if lang == 'vi' %}Cá nhân hóa{% else %}Personalize{% endif %}</div>
+        <h2>{% if lang == 'vi' %}Tùy chỉnh trải nghiệm của bạn{% else %}Tailor your experience{% endif %}</h2>
+        <p>{% if lang == 'vi' %}Tinh chỉnh giao diện, thông báo và ngân sách để phù hợp thói quen chi tiêu.{% else %}Fine-tune appearance, alerts, and budgeting preferences in one place.{% endif %}</p>
+    </div>
+    <div class="settings-hero__meta">
+        <div class="settings-summary">
+            <div class="settings-summary-item">
+                <span class="settings-summary-label">{% if lang == 'vi' %}Giao diện{% else %}Theme{% endif %}</span>
+                <span class="settings-summary-value">
+                    {% if user_settings %}
+                        {% if user_settings.theme == 'system' %}{% if lang == 'vi' %}Theo hệ thống{% else %}System{% endif %}
+                        {% elif user_settings.theme == 'light' %}{% if lang == 'vi' %}Sáng{% else %}Light{% endif %}
+                        {% else %}{% if lang == 'vi' %}Tối{% else %}Dark{% endif %}{% endif %}
+                    {% else %}{% if lang == 'vi' %}Theo hệ thống{% else %}System{% endif %}
+                    {% endif %}
+                </span>
+            </div>
+            <div class="settings-summary-item">
+                <span class="settings-summary-label">{% if lang == 'vi' %}Ngôn ngữ{% else %}Language{% endif %}</span>
+                <span class="settings-summary-value">
+                    {% if user_settings and user_settings.language == 'vi' %}Tiếng Việt{% else %}English{% endif %}
+                </span>
+            </div>
+            <div class="settings-summary-item">
+                <span class="settings-summary-label">{% if lang == 'vi' %}Ngân sách tháng{% else %}Monthly budget{% endif %}</span>
+                <span class="settings-summary-value">
+                    {% if user_settings %}{{ user_settings.monthly_budget|floatformat:0|intcomma }} VND{% else %}0 VND{% endif %}
+                </span>
+            </div>
+            <div class="settings-summary-item">
+                <span class="settings-summary-label">{% if lang == 'vi' %}Bắt đầu tuần{% else %}Week start{% endif %}</span>
+                <span class="settings-summary-value">
+                    {% if user_settings and user_settings.week_start == 'sunday' %}{% if lang == 'vi' %}Chủ nhật{% else %}Sunday{% endif %}{% else %}{% if lang == 'vi' %}Thứ hai{% else %}Monday{% endif %}{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<form method="post" class="settings-grid settings-grid--enhanced">
     {% csrf_token %}
 
-    <section class="card-panel">
-        <div class="card-header">
-            <h2>Notifications</h2>
+    <section class="card-panel settings-section">
+        <div class="card-header settings-header">
+            <div>
+                <h2><i class='bx bx-bell'></i> {% if lang == 'vi' %}Thông báo{% else %}Notifications{% endif %}</h2>
+                <p class="card-subtitle">{% if lang == 'vi' %}Giữ cho bạn luôn được cập nhật.{% else %}Keep you in the loop with smart alerts.{% endif %}</p>
+            </div>
+            <span class="pill">Alerts</span>
         </div>
         <div class="toggle-row">
-            <label>Budget warning</label>
-            <input type="checkbox" checked>
+            <div class="toggle-meta">
+                <label for="id_budget_warning">{% if lang == 'vi' %}Cảnh báo vượt ngân sách{% else %}Budget warning{% endif %}</label>
+                <div class="toggle-note">{% if lang == 'vi' %}Nhắc khi chi tiêu sắp vượt mức đặt ra.{% else %}Get notified when spending nears your limit.{% endif %}</div>
+            </div>
+            {{ form.budget_warning }}
         </div>
         <div class="toggle-row">
-            <label>Insight reminders</label>
-            <input type="checkbox" checked>
+            <div class="toggle-meta">
+                <label for="id_insight_reminders">{% if lang == 'vi' %}Nhắc nhở nhận định{% else %}Insight reminders{% endif %}</label>
+                <div class="toggle-note">{% if lang == 'vi' %}Gợi ý định kỳ về xu hướng chi tiêu.{% else %}Periodic nudges about your spending trends.{% endif %}</div>
+            </div>
+            {{ form.insight_reminders }}
         </div>
     </section>
 
-    <section class="card-panel">
-        <div class="card-header">
-            <h2>Finance preferences</h2>
+    <section class="card-panel settings-section">
+        <div class="card-header settings-header">
+            <div>
+                <h2><i class='bx bx-wallet'></i> {% if lang == 'vi' %}Tuỳ chọn tài chính{% else %}Finance preferences{% endif %}</h2>
+                <p class="card-subtitle">{% if lang == 'vi' %}Cài ngân sách và nhịp tuần phù hợp.{% else %}Set a budget and your preferred week start.{% endif %}</p>
+            </div>
+            <span class="pill">Budget</span>
         </div>
         <div class="form-row">
-            <label>Monthly budget</label>
-            <input class="input" type="text" placeholder="0">
+            <label for="id_monthly_budget">{% if lang == 'vi' %}Ngân sách tháng{% else %}Monthly budget{% endif %}</label>
+            {{ form.monthly_budget }}
         </div>
         <div class="form-row">
-            <label>Week start</label>
-            <select class="input">
-                <option>Monday</option>
-                <option>Sunday</option>
-            </select>
+            <label for="id_week_start">{% if lang == 'vi' %}Bắt đầu tuần{% else %}Week start{% endif %}</label>
+            {{ form.week_start }}
         </div>
     </section>
 
-    <section class="card-panel">
-        <div class="card-header">
-            <h2>Smart features</h2>
+    <section class="card-panel settings-section">
+        <div class="card-header settings-header">
+            <div>
+                <h2><i class='bx bx-brain'></i> {% if lang == 'vi' %}Tính năng thông minh{% else %}Smart features{% endif %}</h2>
+                <p class="card-subtitle">{% if lang == 'vi' %}Tùy chỉnh mức độ tự động hóa và nhận định.{% else %}Control how proactive the insights are.{% endif %}</p>
+            </div>
+            <span class="pill">AI</span>
         </div>
         <div class="toggle-row">
-            <label>AI auto-categorization</label>
-            <input type="checkbox" checked>
+            <div class="toggle-meta">
+                <label for="id_ai_auto_categorization">{% if lang == 'vi' %}Tự phân loại bằng AI{% else %}AI auto-categorization{% endif %}</label>
+                <div class="toggle-note">{% if lang == 'vi' %}Tự động gợi ý danh mục dựa trên ghi chú.{% else %}Suggest categories automatically from notes.{% endif %}</div>
+            </div>
+            {{ form.ai_auto_categorization }}
         </div>
         <div class="form-row">
-            <label>Insight strictness</label>
-            <select class="input">
-                <option>Chill</option>
-                <option selected>Balanced</option>
-                <option>Strict</option>
-            </select>
+            <label for="id_insight_strictness">{% if lang == 'vi' %}Mức độ nghiêm ngặt{% else %}Insight strictness{% endif %}</label>
+            {{ form.insight_strictness }}
         </div>
     </section>
 
-    <section class="card-panel">
-        <div class="card-header">
-            <h2>Appearance</h2>
+    <section class="card-panel settings-section">
+        <div class="card-header settings-header">
+            <div>
+                <h2><i class='bx bx-palette'></i> {% if lang == 'vi' %}Giao diện{% else %}Appearance{% endif %}</h2>
+                <p class="card-subtitle">{% if lang == 'vi' %}Chọn theme và ngôn ngữ hiển thị.{% else %}Pick your theme and language preference.{% endif %}</p>
+            </div>
+            <span class="pill">UI</span>
         </div>
         <div class="form-row">
-            <label>Theme</label>
-            <select class="input">
-                <option>System</option>
-                <option>Light</option>
-                <option selected>Dark</option>
-            </select>
+            <label for="id_theme">{% if lang == 'vi' %}Giao diện{% else %}Theme{% endif %}</label>
+            {{ form.theme }}
         </div>
         <div class="form-row">
-            <label>Language</label>
-            <select class="input">
-                <option>English</option>
-                <option>Vietnamese</option>
-            </select>
+            <label for="id_language">{% if lang == 'vi' %}Ngôn ngữ{% else %}Language{% endif %}</label>
+            {{ form.language }}
         </div>
     </section>
 
-    <section class="card-panel">
-        <div class="card-header">
-            <h2>Data & safety</h2>
+    <section class="card-panel settings-section">
+        <div class="card-header settings-header">
+            <div>
+                <h2><i class='bx bx-shield-quarter'></i> {% if lang == 'vi' %}Dữ liệu & an toàn{% else %}Data & safety{% endif %}</h2>
+                <p class="card-subtitle">{% if lang == 'vi' %}Xuất dữ liệu hoặc xoá sạch khi cần.{% else %}Export your data or clear everything if needed.{% endif %}</p>
+            </div>
+            <span class="pill">Data</span>
         </div>
         <div class="button-row">
-            <button type="button" class="btn btn-ghost">Export CSV</button>
-            <button type="button" class="btn btn-ghost">Export Excel</button>
+            <button type="button" class="btn btn-ghost">{% if lang == 'vi' %}Xuất CSV{% else %}Export CSV{% endif %}</button>
+            <button type="button" class="btn btn-ghost">{% if lang == 'vi' %}Xuất Excel{% else %}Export Excel{% endif %}</button>
         </div>
         <div class="danger-zone">
             <div>
-                <strong>Clear local data</strong>
-                <div class="muted">This action cannot be undone.</div>
+                <strong>{% if lang == 'vi' %}Xoá dữ liệu cục bộ{% else %}Clear local data{% endif %}</strong>
+                <div class="muted">{% if lang == 'vi' %}Hành động này không thể hoàn tác.{% else %}This action cannot be undone.{% endif %}</div>
             </div>
-            <button type="button" class="btn btn-danger">Clear data</button>
+            <button type="button" class="btn btn-danger">{% if lang == 'vi' %}Xoá dữ liệu{% else %}Clear data{% endif %}</button>
         </div>
     </section>
 
-    <div class="settings-actions">
-        <button type="submit" class="btn btn-primary">Save settings</button>
+    <div class="settings-actions settings-actions--floating">
+        <button type="submit" class="btn btn-primary"><i class='bx bx-save'></i> {% if lang == 'vi' %}Lưu cài đặt{% else %}Save settings{% endif %}</button>
     </div>
 </form>
 {% endblock %}
+{% endwith %}

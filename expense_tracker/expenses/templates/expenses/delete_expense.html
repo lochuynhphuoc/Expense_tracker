@@ -1,22 +1,24 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% with lang=user_settings.language|default:'en' %}
 
-{% block title %}Delete Expense • MoneyFlow{% endblock %}
+{% block title %}{% if lang == 'vi' %}Xóa chi tiêu{% else %}Delete Expense{% endif %} • MoneyFlow{% endblock %}
 
 {% block content %}
 <section class="form-card">
-    <h2 class="form-title"><i class='bx bx-trash' style="color: var(--danger)"></i> Delete expense</h2>
-    <p class="helper">Are you sure you want to delete this expense?</p>
+    <h2 class="form-title"><i class='bx bx-trash' style="color: var(--danger)"></i> {% if lang == 'vi' %}Xóa chi tiêu{% else %}Delete expense{% endif %}</h2>
+    <p class="helper">{% if lang == 'vi' %}Bạn chắc chắn muốn xóa khoản chi này?{% else %}Are you sure you want to delete this expense?{% endif %}</p>
     <div class="card" style="margin-top: 16px;">
-        <div><strong>Date:</strong> {{ expense.date|date:"d/m/Y" }}</div>
-        <div><strong>Category:</strong> {{ expense.category_label }}</div>
-        <div><strong>Amount:</strong> {{ expense.amount|floatformat:0|intcomma }} {{ expense.currency }}</div>
-        <div><strong>Description:</strong> {{ expense.description|default:"-" }}</div>
+        <div><strong>{% if lang == 'vi' %}Ngày:{% else %}Date:{% endif %}</strong> {{ expense.date|date:"d/m/Y" }}</div>
+        <div><strong>{% if lang == 'vi' %}Danh mục:{% else %}Category:{% endif %}</strong> {{ expense.category_label }}</div>
+        <div><strong>{% if lang == 'vi' %}Số tiền:{% else %}Amount:{% endif %}</strong> {{ expense.amount|floatformat:0|intcomma }} {{ expense.currency }}</div>
+        <div><strong>{% if lang == 'vi' %}Ghi chú:{% else %}Description:{% endif %}</strong> {{ expense.description|default:"-" }}</div>
     </div>
     <form method="post" class="actions" style="margin-top: 18px;">
         {% csrf_token %}
-        <button type="submit" class="btn btn-primary btn-danger"><i class='bx bx-trash'></i> Delete</button>
-        <a href="{% url 'expense_list' %}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-danger"><i class='bx bx-trash'></i> {% if lang == 'vi' %}Xóa{% else %}Delete{% endif %}</button>
+        <a href="{% url 'expense_list' %}" class="btn btn-ghost">{% if lang == 'vi' %}Hủy{% else %}Cancel{% endif %}</a>
     </form>
             </section>
 {% endblock %}
+{% endwith %}

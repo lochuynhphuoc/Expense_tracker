@@ -1,67 +1,102 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% with lang=user_settings.language|default:'en' %}
 
-{% block title %}Profile • MoneyFlow{% endblock %}
+{% block title %}{% if lang == 'vi' %}Hồ sơ{% else %}Profile{% endif %} • MoneyFlow{% endblock %}
 
 {% block content %}
-<section class="page-header">
-    <div>
-        <h1>Profile</h1>
-        <p class="page-subtitle">Your spending identity and behavior at a glance.</p>
+<section class="profile-hero">
+    <div class="profile-hero-card">
+        <div class="profile-hero-main">
+            <div class="profile-avatar"><i class='bx bx-user'></i></div>
+            <div>
+                <div class="profile-name">{{ request.user.username }}</div>
+                <div class="profile-meta">{% if lang == 'vi' %}Tham gia{% else %}Joined{% endif %} {{ request.user.date_joined|date:"d/m/Y" }}</div>
+            </div>
+        </div>
+        <div class="profile-hero-meta">
+            <span class="pill">{% if lang == 'vi' %}Hồ sơ{% else %}Profile{% endif %}</span>
+            <a class="btn btn-ghost" href="{% url 'settings' %}"><i class='bx bx-cog'></i> {% if lang == 'vi' %}Cài đặt{% else %}Settings{% endif %}</a>
+        </div>
+    </div>
+</section>
+
+<section class="profile-stats">
+    <div class="stat-card">
+        <div class="stat-label">{% if lang == 'vi' %}Giao dịch{% else %}Transactions{% endif %}</div>
+        <div class="stat-value">{{ total_transactions|intcomma }}</div>
+        <div class="stat-sub">{% if lang == 'vi' %}Tất cả giao dịch đã ghi nhận{% else %}All recorded items{% endif %}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{% if lang == 'vi' %}Tổng ghi nhận{% else %}Total recorded{% endif %}</div>
+        <div class="stat-value">{{ total_amount|floatformat:0|intcomma }} VND</div>
+        <div class="stat-sub">{% if lang == 'vi' %}Tổng chi tiêu tích lũy{% else %}Lifetime spending{% endif %}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{% if lang == 'vi' %}TB mỗi tháng{% else %}Avg monthly{% endif %}</div>
+        <div class="stat-value">{{ avg_monthly|floatformat:0|intcomma }} VND</div>
+        <div class="stat-sub">{% if lang == 'vi' %}Mức chi tiêu trung bình{% else %}Monthly average{% endif %}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{% if lang == 'vi' %}Danh mục lớn nhất{% else %}Top category{% endif %}</div>
+        <div class="stat-value">{{ top_category|default:"-" }}</div>
+        <div class="stat-sub">{% if lang == 'vi' %}Danh mục chi nhiều nhất{% else %}Most spent category{% endif %}</div>
     </div>
 </section>
 
 <section class="profile-grid">
-    <div class="card-panel">
-        <div class="card-header">
-            <h2>Identity</h2>
-            <span class="pill">Profile</span>
-        </div>
-        <div class="profile-identity">
-            <div class="profile-avatar"><i class='bx bx-user'></i></div>
+    <div class="card-panel profile-card">
+        <div class="card-header settings-header">
             <div>
-                <div class="profile-name">{{ request.user.username }}</div>
-                <div class="profile-meta">Joined {{ request.user.date_joined|date:"d/m/Y" }}</div>
+                <h2><i class='bx bx-id-card'></i> {% if lang == 'vi' %}Thông tin cá nhân{% else %}Personal details{% endif %}</h2>
+                <p class="card-subtitle">{% if lang == 'vi' %}Thông tin cơ bản cho tài khoản của bạn.{% else %}Basic account information for your profile.{% endif %}</p>
             </div>
+            <span class="pill">{% if lang == 'vi' %}Tài khoản{% else %}Account{% endif %}</span>
         </div>
         <div class="form-row">
-            <label>Display name</label>
+            <label>{% if lang == 'vi' %}Tên hiển thị{% else %}Display name{% endif %}</label>
             <input class="input" type="text" value="{{ request.user.username }}" readonly>
         </div>
         <div class="form-row">
-            <label>Currency</label>
+            <label>{% if lang == 'vi' %}Tiền tệ{% else %}Currency{% endif %}</label>
             <input class="input" type="text" value="VND" readonly>
         </div>
     </div>
 
-    <div class="card-panel">
-        <div class="card-header">
-            <h2>Spending Snapshot</h2>
-            <span class="pill">Summary</span>
+    <div class="card-panel profile-card">
+        <div class="card-header settings-header">
+            <div>
+                <h2><i class='bx bx-line-chart'></i> {% if lang == 'vi' %}Tổng quan chi tiêu{% else %}Spending Snapshot{% endif %}</h2>
+                <p class="card-subtitle">{% if lang == 'vi' %}Theo dõi nhịp chi tiêu hiện tại.{% else %}Quick view of your current spending rhythm.{% endif %}</p>
+            </div>
+            <span class="pill">{% if lang == 'vi' %}Tóm tắt{% else %}Summary{% endif %}</span>
         </div>
         <div class="stat-list">
             <div>
-                <div class="stat-label">Transactions</div>
+                <div class="stat-label">{% if lang == 'vi' %}Giao dịch{% else %}Transactions{% endif %}</div>
                 <div class="stat-value">{{ total_transactions|intcomma }}</div>
             </div>
             <div>
-                <div class="stat-label">Total recorded</div>
+                <div class="stat-label">{% if lang == 'vi' %}Tổng ghi nhận{% else %}Total recorded{% endif %}</div>
                 <div class="stat-value">{{ total_amount|floatformat:0|intcomma }} VND</div>
             </div>
             <div>
-                <div class="stat-label">Avg monthly</div>
+                <div class="stat-label">{% if lang == 'vi' %}TB mỗi tháng{% else %}Avg monthly{% endif %}</div>
                 <div class="stat-value">{{ avg_monthly|floatformat:0|intcomma }} VND</div>
             </div>
             <div>
-                <div class="stat-label">Top category</div>
+                <div class="stat-label">{% if lang == 'vi' %}Danh mục lớn nhất{% else %}Top category{% endif %}</div>
                 <div class="stat-value">{{ top_category|default:"-" }}</div>
             </div>
         </div>
     </div>
 
-    <div class="card-panel">
-        <div class="card-header">
-            <h2>Spending Profile</h2>
+    <div class="card-panel profile-card span-2">
+        <div class="card-header settings-header">
+            <div>
+                <h2><i class='bx bx-badge-check'></i> {% if lang == 'vi' %}Hồ sơ chi tiêu{% else %}Spending Profile{% endif %}</h2>
+                <p class="card-subtitle">{% if lang == 'vi' %}Đánh giá AI dựa trên lịch sử chi tiêu.{% else %}AI-driven evaluation of your spending habits.{% endif %}</p>
+            </div>
             <span class="pill">AI</span>
         </div>
         <div class="profile-highlight">
@@ -69,9 +104,10 @@
             <div class="profile-note">{{ profile_explain }}</div>
         </div>
         <div class="insight-box">
-            <div class="insight-title">Insight</div>
+            <div class="insight-title">{% if lang == 'vi' %}Nhận định{% else %}Insight{% endif %}</div>
             <div class="insight-text">{{ insight }}</div>
         </div>
     </div>
 </section>
 {% endblock %}
+{% endwith %}

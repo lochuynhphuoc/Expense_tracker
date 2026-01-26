@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from django import forms
-from .models import Expense, Category
+from .models import Expense, Category, UserSettings
 
 
 CATEGORY_GROUPS = {
@@ -174,6 +174,13 @@ class ExpenseForm(forms.ModelForm):
         if not self.user:
             return category
 
+        try:
+            settings = UserSettings.objects.filter(user=self.user).first()
+        except Exception:
+            settings = None
+        if settings and not settings.ai_auto_categorization:
+            return category
+
         description = (self.cleaned_data.get('description') or '').lower()
         if description:
             for category_name, keywords in CATEGORY_KEYWORDS.items():
@@ -184,3 +191,54 @@ class ExpenseForm(forms.ModelForm):
         default_name = 'Khác - Chưa phân loại'
         category, _ = Category.objects.get_or_create(user=self.user, name=default_name)
         return category
+
+
+class UserSettingsForm(forms.ModelForm):
+    class Meta:
+        model = UserSettings
+        fields = [
+            'budget_warning',
+            'insight_reminders',
+            'monthly_budget',
+            'week_start',
+            'ai_auto_categorization',
+            'insight_strictness',
+            'theme',
+            'language',
+        ]
+        widgets = {
+            'monthly_budget': forms.TextInput(attrs={'placeholder': '0', 'class': 'input'}),
+            'week_start': forms.Select(attrs={'class': 'input'}),
+            'insight_strictness': forms.Select(attrs={'class': 'input'}),
+            'theme': forms.Select(attrs={'class': 'input'}),
+            'language': forms.Select(attrs={'class': 'input'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        language = kwargs.pop('language', 'en')
+        super().__init__(*args, **kwargs)
+        is_vi = language == 'vi'
+        self.fields['week_start'].choices = [
+            ('monday', 'Thứ Hai' if is_vi else 'Monday'),
+            ('sunday', 'Chủ Nhật' if is_vi else 'Sunday'),
+        ]
+        self.fields['insight_strictness'].choices = [
+            ('chill', 'Thoải mái' if is_vi else 'Chill'),
+            ('balanced', 'Cân bằng' if is_vi else 'Balanced'),
+            ('strict', 'Nghiêm khắc' if is_vi else 'Strict'),
+        ]
+        self.fields['theme'].choices = [
+            ('system', 'Theo hệ thống' if is_vi else 'System'),
+            ('light', 'Sáng' if is_vi else 'Light'),
+            ('dark', 'Tối' if is_vi else 'Dark'),
+        ]
+        self.fields['language'].choices = [
+            ('en', 'English'),
+            ('vi', 'Tiếng Việt'),
+        ]
+        for name, field in self.fields.items():
+            if name in {'budget_warning', 'insight_reminders', 'ai_auto_categorization'}:
+                field.widget.attrs.setdefault('class', '')
+            else:
+                existing_class = field.widget.attrs.get('class', '')
+                field.widget.attrs['class'] = (existing_class + ' input').strip()

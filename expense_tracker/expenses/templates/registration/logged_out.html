@@ -1,15 +1,17 @@
 {% extends 'base.html' %}
+{% with lang=user_settings.language|default:'en' %}
 
-{% block title %}Logged Out • MoneyFlow{% endblock %}
+{% block title %}{% if lang == 'vi' %}Đã đăng xuất{% else %}Logged Out{% endif %} • MoneyFlow{% endblock %}
 
 {% block content %}
 <section class="hero" style="text-align: center; padding: 4rem 0;">
     <div class="hero-card">
-        <h1 class="hero-title">You have been logged out</h1>
-        <p class="hero-subtitle">Thanks for using MoneyFlow. See you soon!</p>
+        <h1 class="hero-title">{% if lang == 'vi' %}Bạn đã đăng xuất{% else %}You have been logged out{% endif %}</h1>
+        <p class="hero-subtitle">{% if lang == 'vi' %}Cảm ơn bạn đã sử dụng MoneyFlow. Hẹn gặp lại!{% else %}Thanks for using MoneyFlow. See you soon!{% endif %}</p>
         <div style="margin-top: 2rem;">
-            <a href="{% url 'login' %}" class="btn btn-primary" style="text-decoration: none;">Login Again</a>
+            <a href="{% url 'login' %}" class="btn btn-primary" style="text-decoration: none;">{% if lang == 'vi' %}Đăng nhập lại{% else %}Login Again{% endif %}</a>
         </div>
     </div>
 </section>
 {% endblock %}
+{% endwith %}
