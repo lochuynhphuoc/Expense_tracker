@@ -130,7 +130,7 @@ Tài khoản mẫu (nếu dùng cách 2 import database.sql):
 - user: admin
 - password: admin
 
-## Lỗi thường gặp &cách xử lý nhanh
+## Lỗi thường gặp & cách xử lý nhanh
 
 - `ModuleNotFoundError: No module named 'MySQLdb'`
 
