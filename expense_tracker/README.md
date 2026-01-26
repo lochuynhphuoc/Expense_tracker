@@ -87,35 +87,50 @@ pip install -r requirements.txt
 1. Bật Apache + MySQL trong XAMPP.
 2. Mở phpMyAdmin: http://localhost/phpmyadmin
 3. Tạo database `expense_tracker` với collation `utf8mb4_general_ci`.
-4. (Tuỳ chọn) Import [database.sql](database.sql) để có dữ liệu mẫu.
-5. Kiểm tra cấu hình DB trong [expense_tracker/settings.py](expense_tracker/settings.py).
-6. Chạy migrate nếu chưa import dữ liệu mẫu:
+4. Kiểm tra cấu hình DB trong [expense_tracker/settings.py](expense_tracker/settings.py).
+
+### 4) Chạy app (chọn 1)
+
+#### Cách 1: Tạo tài khoản admin mới, dữ liệu trống
+
+- Bước 1: Tạo DB như trên, rồi chạy:
 
 ```bash
+cd expense_tracker
+python manage.py makemigrations
 python manage.py migrate
 ```
 
-### 4) Chạy ứng dụng
+- Bước 2: Tạo tài khoản admin:
+
+```bash
+python manage.py createsuperuser
+```
+
+- Bước 3: Chạy ứng dụng:
+
+```bash
+python manage.py runserver
+```
+
+#### Cách 2: Dùng database mẫu có sẵn dữ liệu
+
+- Bước 1: Import [database.sql](database.sql) vào DB `expense_tracker` trong phpMyAdmin.
+- Bước 2: Chạy ứng dụng:
 
 ```bash
 cd expense_tracker
 python manage.py runserver
 ```
 
-Mở trình duyệt: http://127.0.0.1:8000/
+Mở trình duyệt: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
-Tài khoản mẫu (nếu import database.sql):
+Tài khoản mẫu (nếu dùng cách 2 import database.sql):
 
 - user: admin
 - password: admin
 
-## Tạo tài khoản mới (nếu không import database.sql)
-
-```bash
-python manage.py createsuperuser
-```
-
-## Lỗi thường gặp & cách xử lý nhanh
+## Lỗi thường gặp &cách xử lý nhanh
 
 - `ModuleNotFoundError: No module named 'MySQLdb'`
 
