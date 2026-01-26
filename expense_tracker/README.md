@@ -27,6 +27,7 @@ expense_tracker/
 ├─ requirements.txt              # Danh sách thư viện
 ├─ README.md                     # Tài liệu hướng dẫn
 ├─ settings.py                   # Thiết lập bổ sung
+├─ .gitignore                    # Cấu hình Git bỏ qua các file/thư mục
 ├─ expense_tracker/              # Package cấu hình dự án
 │  ├─ __init__.py
 │  ├─ settings.py                # Cấu hình chính
@@ -117,18 +118,19 @@ python manage.py createsuperuser
 ## Lỗi thường gặp & cách xử lý nhanh
 
 - `ModuleNotFoundError: No module named 'MySQLdb'`
-   - Cài driver: `pip install mysqlclient`
-   - Nếu lỗi build, cài Visual C++ Build Tools hoặc thử `pip install pymysql` và cấu hình lại.
 
+  - Cài driver: `pip install mysqlclient`
+  - Nếu lỗi build, cài Visual C++ Build Tools hoặc thử `pip install pymysql` và cấu hình lại.
 - `Access denied for user 'root'@'localhost'`
-   - Kiểm tra mật khẩu trong [expense_tracker/settings.py](expense_tracker/settings.py).
-   - Đảm bảo MySQL đang chạy.
 
+  - Kiểm tra mật khẩu trong [expense_tracker/settings.py](expense_tracker/settings.py).
+  - Đảm bảo MySQL đang chạy.
 - Không thấy thay đổi CSS
-   - Hard refresh: Ctrl + F5.
 
+  - Hard refresh: Ctrl + F5.
 - Modal Add/Edit không hiển thị
-   - Đảm bảo server đang chạy ở http://127.0.0.1:8000.
+
+  - Đảm bảo server đang chạy ở http://127.0.0.1:8000.
 
 ## Ghi chú
 
