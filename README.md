@@ -21,11 +21,12 @@
 ## Cấu trúc thư mục
 
 ```
+
+
 expense_tracker/
 ├─ database.sql                  # Database mẫu
 ├─ manage.py                     # Lệnh quản lý Django
 ├─ requirements.txt              # Danh sách thư viện
-├─ README.md                     # Tài liệu hướng dẫn
 ├─ settings.py                   # Thiết lập bổ sung
 ├─ .gitignore                    # Cấu hình Git bỏ qua các file/thư mục
 ├─ project_config/               # Package cấu hình dự án
@@ -44,12 +45,14 @@ expense_tracker/
    ├─ admin.py                   # Django Admin
    ├─ tests.py                   # Test (nếu có)
    ├─ migrations/                # Migration DB
-  ├─ static/tracker/            # CSS, ảnh tĩnh
+   ├─ static/tracker/            # CSS, ảnh tĩnh
    │  └─ styles.css
    └─ templates/
       ├─ base.html               # Layout chung + navbar + modal
       ├─ tracker/                # Dashboard, Add/Edit, Profile, Settings
       └─ registration/           # Login/Register/Logout
+README.md                        # Tài liệu hướng dẫn
+
 ```
 
 ## Cài đặt & chạy nhanh
