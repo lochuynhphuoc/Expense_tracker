@@ -287,12 +287,67 @@ def expense_list(request):
                     if is_vi else
                     f"Spending is skewed toward '{top_label}' ({share:.0f}%). Consider trimming it."
                 )
+                insights.append(
+                    f"Mục '{top_label}' đang dẫn dắt xu hướng chi tiêu. Hãy thử đặt giới hạn mềm cho mục này trong tuần tới."
+                    if is_vi else
+                    f"'{top_label}' is driving your spend pattern. Try a soft cap for this category next week."
+                )
             elif share >= 25:
                 insights.append(
                     f"'{top_label}' đang chiếm {share:.0f}% tổng chi. Giữ mắt ở mục này nhé."
                     if is_vi else
                     f"'{top_label}' makes up {share:.0f}% of total spend. Keep an eye on it."
                 )
+                insights.append(
+                    f"Mức chi của '{top_label}' đủ lớn để tạo đà. Một vài điều chỉnh nhỏ có thể tạo khác biệt."
+                    if is_vi else
+                    f"'{top_label}' is big enough to move the needle. Small tweaks here could pay off."
+                )
+            else:
+                insights.append(
+                    f"Chi tiêu khá cân bằng, không có mục nào vượt trội. Đây là dấu hiệu tốt để giữ nhịp ổn định."
+                    if is_vi else
+                    "Spending looks balanced with no dominant category. That is a solid baseline to maintain."
+                )
+        top_two_rows = list(
+            chart_qs.values('category__name')
+            .annotate(total=Sum('amount'))
+            .order_by('-total')[:2]
+        )
+        if len(top_two_rows) == 2:
+            top_two_total = (top_two_rows[0]['total'] or 0) + (top_two_rows[1]['total'] or 0)
+            top_two_share = (top_two_total / total_in_range) * 100
+            if top_two_share >= 60:
+                label_a = display_label(top_two_rows[0]['category__name'])
+                label_b = display_label(top_two_rows[1]['category__name'])
+                insights.append(
+                    f"Hai mục '{label_a}' và '{label_b}' đang chiếm {top_two_share:.0f}% tổng chi. Đây là cụm nên ưu tiên tối ưu trước."
+                    if is_vi else
+                    f"'{label_a}' and '{label_b}' account for {top_two_share:.0f}% of total spend. Optimizing these two will have the biggest impact."
+                )
+
+        series_30 = time_series_data.get('30', {})
+        values_30 = series_30.get('values', [])
+        labels_30 = series_30.get('labels', [])
+        if values_30:
+            avg_30 = sum(values_30) / len(values_30)
+            max_30 = max(values_30)
+            if avg_30 > 0 and max_30 >= avg_30 * 2.5:
+                max_index = values_30.index(max_30)
+                spike_label = labels_30[max_index] if max_index < len(labels_30) else ''
+                insights.append(
+                    f"Có một ngày chi tiêu tăng vọt ({spike_label}). Bạn có thể xem lại giao dịch ngày đó để tìm nguyên nhân."
+                    if is_vi else
+                    f"There was a one-day spend spike ({spike_label}). Review that day to see what drove it."
+                )
+
+        active_days = chart_qs.values('date').distinct().count()
+        if active_days and active_days <= 5:
+            insights.append(
+                f"Dữ liệu hiện mới có {active_days} ngày chi tiêu. Thêm đều đặn hơn để phân tích chính xác hơn."
+                if is_vi else
+                f"There are only {active_days} active spend days so far. Add more days for sharper insights."
+            )
     if not insights:
         insights.append(
             "Chưa đủ dữ liệu để phân tích. Hãy thêm vài khoản chi nữa nhé."
