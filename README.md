@@ -28,13 +28,13 @@ expense_tracker/
 ├─ README.md                     # Tài liệu hướng dẫn
 ├─ settings.py                   # Thiết lập bổ sung
 ├─ .gitignore                    # Cấu hình Git bỏ qua các file/thư mục
-├─ expense_tracker/              # Package cấu hình dự án
+├─ project_config/               # Package cấu hình dự án
 │  ├─ __init__.py
 │  ├─ settings.py                # Cấu hình chính
 │  ├─ urls.py                    # URL root
 │  ├─ wsgi.py                    # WSGI
 │  └─ asgi.py                    # ASGI
-└─ expenses/                     # App quản lý chi tiêu
+└─ tracker/                      # App quản lý chi tiêu
    ├─ __init__.py
    ├─ apps.py                    # Cấu hình app
    ├─ models.py                  # Model dữ liệu
@@ -44,11 +44,11 @@ expense_tracker/
    ├─ admin.py                   # Django Admin
    ├─ tests.py                   # Test (nếu có)
    ├─ migrations/                # Migration DB
-   ├─ static/expenses/           # CSS, ảnh tĩnh
+  ├─ static/tracker/            # CSS, ảnh tĩnh
    │  └─ styles.css
    └─ templates/
       ├─ base.html               # Layout chung + navbar + modal
-      ├─ expenses/               # Dashboard, Add/Edit, Profile, Settings
+      ├─ tracker/                # Dashboard, Add/Edit, Profile, Settings
       └─ registration/           # Login/Register/Logout
 ```
 
@@ -87,7 +87,7 @@ pip install -r requirements.txt
 1. Bật Apache + MySQL trong XAMPP.
 2. Mở phpMyAdmin: http://localhost/phpmyadmin
 3. Tạo database `expense_tracker` với collation `utf8mb4_general_ci`.
-4. Kiểm tra cấu hình DB trong [expense_tracker/settings.py](expense_tracker/settings.py).
+4. Kiểm tra cấu hình DB trong [expense_tracker/project_config/settings.py](expense_tracker/project_config/settings.py).
 
 ### 4) Chạy app (chọn 1)
 
@@ -138,7 +138,7 @@ Tài khoản mẫu (nếu dùng cách 2 import database.sql):
   - Nếu lỗi build, cài Visual C++ Build Tools hoặc thử `pip install pymysql` và cấu hình lại.
 - `Access denied for user 'root'@'localhost'`
 
-  - Kiểm tra mật khẩu trong [expense_tracker/settings.py](expense_tracker/settings.py).
+  - Kiểm tra mật khẩu trong [expense_tracker/project_config/settings.py](expense_tracker/project_config/settings.py).
   - Đảm bảo MySQL đang chạy.
 - Không thấy thay đổi CSS
 
@@ -151,3 +151,12 @@ Tài khoản mẫu (nếu dùng cách 2 import database.sql):
 
 - Giao diện sử dụng Boxicons và Chart.js qua CDN.
 - Nếu chỉnh CSS, refresh bằng Ctrl + F5 để tránh cache.
+
+## Django được sử dụng như thế nào
+
+- **Mô hình MVT**: `tracker/models.py` định nghĩa dữ liệu, `tracker/views.py` xử lý logic và trả về template trong `tracker/templates/`.
+- **Routing**: `project_config/urls.py` gom URL toàn dự án, còn `tracker/urls.py` chứa các route chi tiêu.
+- **ORM & migrations**: Model thao tác DB qua Django ORM, migrations nằm trong `tracker/migrations/`.
+- **Auth & session**: Dùng sẵn `django.contrib.auth` cho login/logout, `CustomLoginView` để tuỳ biến.
+- **Templates & static**: Giao diện dùng Django Template Language, CSS/ảnh đặt ở `tracker/static/tracker/`.
+- **Form & validation**: Form trong `tracker/forms.py` giúp validate dữ liệu nhập.

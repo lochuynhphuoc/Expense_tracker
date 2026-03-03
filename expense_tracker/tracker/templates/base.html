@@ -6,13 +6,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}MoneyFlow{% endblock %}</title>
-    <link rel="icon" type="image/png" href="{% static 'expenses/logo.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'tracker/logo.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="{% static 'expenses/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'tracker/styles.css' %}">
 </head>
 <body class="app-body{% if request.GET.modal == '1' %} is-modal{% endif %}"
     data-theme="dark"
@@ -23,7 +23,7 @@
             <div class="nav-left">
                 <a href="{% url 'expense_list' %}" class="brand-link" data-reset-scroll="true">
                     <span class="logo">
-                        <img src="{% static 'expenses/logo.png' %}" alt="Logo">
+                        <img src="{% static 'tracker/logo.png' %}" alt="Logo">
                     </span>
                     <span class="brand-block">
                         <span class="brand-text">Money<span class="brand-accent">Flow</span></span>

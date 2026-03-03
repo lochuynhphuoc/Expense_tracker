@@ -79,7 +79,7 @@ def add_expense(request):
                 content_type='text/html'
             )
         return redirect('expense_list')
-    return render(request, 'expenses/add_expense.html', {'form': form})
+    return render(request, 'tracker/add_expense.html', {'form': form})
 
 def _apply_filters(request, base_qs):
     category_group = request.GET.get('category_group', '')
@@ -390,7 +390,7 @@ def expense_list(request):
         'time_series_data': time_series_data,
         'insights': insights,
     }
-    return render(request, 'expenses/expense_list.html', context)
+    return render(request, 'tracker/expense_list.html', context)
 
 
 @login_required
@@ -485,7 +485,7 @@ def profile_view(request):
         'profile_explain': profile_explain,
         'insight': insight,
     }
-    return render(request, 'expenses/profile.html', context)
+    return render(request, 'tracker/profile.html', context)
 
 
 @login_required
@@ -501,7 +501,7 @@ def settings_view(request):
             return redirect('settings')
     else:
         form = UserSettingsForm(instance=settings, language=settings.language)
-    return render(request, 'expenses/settings.html', {'form': form})
+    return render(request, 'tracker/settings.html', {'form': form})
 
 
 @login_required
@@ -527,7 +527,7 @@ def edit_expense(request, pk):
                 content_type='text/html'
             )
         return redirect('expense_list')
-    return render(request, 'expenses/edit_expense.html', {'form': form, 'expense': expense})
+    return render(request, 'tracker/edit_expense.html', {'form': form, 'expense': expense})
 
 
 @login_required
