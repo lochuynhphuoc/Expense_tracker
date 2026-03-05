@@ -94,7 +94,7 @@ CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
 ```
 
-![How to](./gif_folder/5. Tạo database MySQL local.gif)
+![How to](./gif_folder/5. createdb.gif)
 
 ## 6. Cấu hình kết nối DB bằng `.env`
 
@@ -143,7 +143,7 @@ Vào `[http://127.0.0.1:8000/](http://127.0.0.1:8000/)` để thực hiện đă
 - username: `admin`
 - password: `admin`
 
-![How to](./gif_folder/7. Chạy app theo 2 kịch bản.gif)
+![How to](./gif_folder/7. runapp.gif)
 
 ## 8. Cách import SQL trong MySQL Workbench
 
