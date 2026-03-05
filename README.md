@@ -126,7 +126,7 @@ cd .\expense_tracker
 ..\.venv\Scripts\python.exe manage.py runserver
 ```
 
-Sau đó, vào `[http://127.0.0.1:8000/](http://127.0.0.1:8000/)` để thực hiện đăng nhập với tài khoản và mật khẩu superuser mới tạo ở lệnh trên.
+Sau đó, vào [http://127.0.0.1:8000/](http://127.0.0.1:8000/) để thực hiện đăng nhập với tài khoản và mật khẩu superuser mới tạo ở lệnh trên.
 
 ### Kịch bản B: DB có dữ liệu mẫu
 
@@ -138,7 +138,7 @@ cd .\expense_tracker
 ..\.venv\Scripts\python.exe manage.py runserver
 ```
 
-Vào `[http://127.0.0.1:8000/](http://127.0.0.1:8000/)` để thực hiện đăng nhập với tài khoản demo (nếu chưa thay đổi trong dump):
+Vào [http://127.0.0.1:8000/](http://127.0.0.1:8000/) để thực hiện đăng nhập với tài khoản demo (nếu chưa thay đổi trong dump):
 
 - username: `admin`
 - password: `admin`
