@@ -1,165 +1,211 @@
-# MoneyFlow (Expense Tracker)
+# MoneyFlow - Expense Tracker
 
-Ứng dụng quản lý chi tiêu cá nhân viết bằng Django, giao diện hiện đại, hỗ trợ biểu đồ, lọc chi tiêu, và modal CRUD để thao tác nhanh.
+MoneyFlow là ứng dụng quản lý chi tiêu cá nhân xây dựng bằng Django. Project hỗ trợ ghi nhận chi tiêu, phân loại, thống kê và hiển thị dashboard tổng quan theo thời gian.
 
-## Tính năng chính
+README này hướng dẫn đầy đủ:
 
-- Dashboard tổng quan (KPI + biểu đồ)
-- Thêm/Sửa/Xoá chi tiêu bằng modal
-- Tìm kiếm, lọc theo thời gian, nhóm danh mục, số tiền, loại tiền
-- Profile: tổng quan thói quen chi tiêu
-- Settings: cấu hình ứng dụng (UI/UX, budget, smart features)
-- Dark/Light mode
+- cấu trúc thư mục project
+- cách kết nối MySQL local
+- cách chạy ứng dụng với dữ liệu rỗng hoặc dữ liệu mẫu
+- Django được sử dụng như thế nào trong codebase
 
-## Yêu cầu
+## 1. Yêu cầu
 
-- Python 3.10+ (khuyến nghị 3.11)
-- pip
-- MySQL (XAMPP + phpMyAdmin) nếu dùng cấu hình mặc định
-- Trình duyệt Chrome/Edge để chạy giao diện
+- Python 3.10+
+- MySQL Server 8.x
+- MySQL Workbench
+- VS Code (khuyến nghị)
 
-## Cấu trúc thư mục
+## 2. Cấu trúc thư mục project
 
+```text
+Expense_tracker/
+|-- README.md
+`-- expense_tracker/
+		|-- .env
+		|-- .gitignore
+		|-- database.sql
+		|-- database_hasdata.sql
+		|-- manage.py
+		|-- requirements.txt
+		|-- settings.py
+		|-- project_config/
+		|   |-- __init__.py
+		|   |-- asgi.py
+		|   |-- settings.py
+		|   |-- urls.py
+		|   `-- wsgi.py
+		`-- tracker/
+				|-- __init__.py
+				|-- admin.py
+				|-- apps.py
+				|-- context_processors.py
+				|-- forms.py
+				|-- models.py
+				|-- tests.py
+				|-- urls.py
+				|-- views.py
+				|-- migrations/
+				|   |-- 0001_initial.py
+				|   |-- 0002_expense_currency.py
+				|   `-- 0003_usersettings.py
+				|-- static/
+				|   `-- tracker/
+				|       `-- styles.css
+				`-- templates/
+						|-- base.html
+						|-- registration/
+						`-- tracker/
 ```
 
+## 3. Ý nghĩa 2 file SQL
 
-expense_tracker/
-├─ database.sql                  # Database mẫu
-├─ manage.py                     # Lệnh quản lý Django
-├─ requirements.txt              # Danh sách thư viện
-├─ settings.py                   # Thiết lập bổ sung
-├─ .gitignore                    # Cấu hình Git bỏ qua các file/thư mục
-├─ project_config/               # Package cấu hình dự án
-│  ├─ __init__.py
-│  ├─ settings.py                # Cấu hình chính
-│  ├─ urls.py                    # URL root
-│  ├─ wsgi.py                    # WSGI
-│  └─ asgi.py                    # ASGI
-└─ tracker/                      # App quản lý chi tiêu
-   ├─ __init__.py
-   ├─ apps.py                    # Cấu hình app
-   ├─ models.py                  # Model dữ liệu
-   ├─ forms.py                   # Form + validate
-   ├─ views.py                   # Logic + render
-   ├─ urls.py                    # URL app
-   ├─ admin.py                   # Django Admin
-   ├─ tests.py                   # Test (nếu có)
-   ├─ migrations/                # Migration DB
-   ├─ static/tracker/            # CSS, ảnh tĩnh
-   │  └─ styles.css
-   └─ templates/
-      ├─ base.html               # Layout chung + navbar + modal
-      ├─ tracker/                # Dashboard, Add/Edit, Profile, Settings
-      └─ registration/           # Login/Register/Logout
-README.md                        # Tài liệu hướng dẫn
+- `expense_tracker/database.sql`
 
-```
+  - Chỉ chứa schema: `CREATE TABLE`, index, constraints.
+  - Không có `INSERT` dữ liệu mẫu.
+- `expense_tracker/database_hasdata.sql`
 
-## Cài đặt & chạy nhanh
+  - Chứa schema + dữ liệu mẫu đầy đủ.
+  - Có tài khoản demo và chi tiêu mẫu để test nhanh giao diện.
 
-### 1) Tạo môi trường ảo
+## 4. Cài đặt môi trường Python
 
-### Windows (PowerShell)
+Chạy tại thư mục gốc `Expense_tracker/`:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+pip install -r .\expense_tracker\requirements.txt
 ```
 
-### macOS / Linux
+Nếu VS Code báo lỗi import thư viện, chọn đúng interpreter:
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
+- `Ctrl+Shift+P` -> `Python: Select Interpreter`
+- Chọn: `.venv\Scripts\python.exe`
+
+## 5. Tạo database MySQL local
+
+Mở MySQL Workbench và kết nối `Local instance MySQL80`, sau đó chạy:
+
+```sql
+CREATE DATABASE IF NOT EXISTS expense_tracker
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
 ```
 
-### 2) Cài thư viện
+![How to](./gif_folder/5. Tạo database MySQL local.gif)
 
-```bash
-pip install -r requirements.txt
+## 6. Cấu hình kết nối DB bằng `.env`
+
+Sửa file `expense_tracker/.env`:
+
+```env
+DJANGO_SECRET_KEY=replace-with-a-secure-secret
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
+
+DB_NAME=expense_tracker
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_HOST=127.0.0.1
+DB_PORT=3306
 ```
 
-> Nếu dùng MySQL, cần thêm driver:
->
-> ```bash
-> pip install mysqlclient
-> ```
+## 7. Chạy app theo 2 kịch bản
 
-### 3) Thiết lập MySQL (XAMPP)
+### Kịch bản A: DB rỗng (không dữ liệu mẫu)
 
-1. Bật Apache + MySQL trong XAMPP.
-2. Mở phpMyAdmin: http://localhost/phpmyadmin
-3. Tạo database `expense_tracker` với collation `utf8mb4_general_ci`.
-4. Kiểm tra cấu hình DB trong [expense_tracker/project_config/settings.py](expense_tracker/project_config/settings.py).
+1. Import `expense_tracker/database.sql` vào MySQL Workbench.
+2. Chạy các lệnh Django:
 
-### 4) Chạy app (chọn 1)
-
-#### Cách 1: Tạo tài khoản admin mới, dữ liệu trống
-
-- Bước 1: Tạo DB như trên, rồi chạy:
-
-```bash
-cd expense_tracker
-python manage.py makemigrations
-python manage.py migrate
+```powershell
+cd .\expense_tracker
+..\.venv\Scripts\python.exe manage.py migrate
+..\.venv\Scripts\python.exe manage.py createsuperuser
+..\.venv\Scripts\python.exe manage.py runserver
 ```
 
-- Bước 2: Tạo tài khoản admin:
+Sau đó, vào `[http://127.0.0.1:8000/](http://127.0.0.1:8000/)` để thực hiện đăng nhập với tài khoản và mật khẩu superuser mới tạo ở lệnh trên.
 
-```bash
-python manage.py createsuperuser
+### Kịch bản B: DB có dữ liệu mẫu
+
+1. Import `expense_tracker/database_hasdata.sql` vào MySQL Workbench.
+2. Chạy server:
+
+```powershell
+cd .\expense_tracker
+..\.venv\Scripts\python.exe manage.py runserver
 ```
 
-- Bước 3: Chạy ứng dụng:
+Vào `[http://127.0.0.1:8000/](http://127.0.0.1:8000/)` để thực hiện đăng nhập với tài khoản demo (nếu chưa thay đổi trong dump):
 
-```bash
-python manage.py runserver
+- username: `admin`
+- password: `admin`
+
+![How to](./gif_folder/7. Chạy app theo 2 kịch bản.gif)
+
+## 8. Cách import SQL trong MySQL Workbench
+
+1. Tạo schema `expense_tracker` (nếu chưa có).
+2. `File` -> `Open SQL Script...`
+3. Chọn file `database.sql` hoặc `database_hasdata.sql`
+4. Bấm nút `Execute` (icon tia sét) để chạy toàn bộ script
+5. Refresh `Schemas` để kiểm tra bảng
+
+## 9. Kiểm tra nhanh sau khi import
+
+```sql
+USE expense_tracker;
+SELECT COUNT(*) AS categories_count FROM expenses_category;
+SELECT COUNT(*) AS expenses_count FROM expenses_expense;
+SELECT COUNT(*) AS users_count FROM auth_user;
 ```
 
-#### Cách 2: Dùng database mẫu có sẵn dữ liệu
+## 10. Django được sử dụng như thế nào trong project này
 
-- Bước 1: Import [database.sql](database.sql) vào DB `expense_tracker` trong phpMyAdmin.
-- Bước 2: Chạy ứng dụng:
+Project dùng Django theo mô hình MVT (Model - View - Template):
 
-```bash
-cd expense_tracker
-python manage.py runserver
-```
+- Model
 
-Mở trình duyệt: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+  - Nguồn: `expense_tracker/tracker/models.py`
+  - Định nghĩa các bảng chính: `Category`, `Expense`, `UserSettings`.
+  - Quan hệ: `Expense -> Category`, `Expense -> User`, `UserSettings -> User (OneToOne)`.
+- Migration
 
-Tài khoản mẫu (nếu dùng cách 2 import database.sql):
+  - Nguồn: `expense_tracker/tracker/migrations/`
+  - Theo dõi thay đổi schema theo từng bước (`0001`, `0002`, `0003`).
+  - Lệnh `manage.py migrate` dùng để đồng bộ schema DB theo code.
+- View + URL
 
-- user: admin
-- password: admin
+  - Nguồn: `expense_tracker/tracker/views.py`, `expense_tracker/tracker/urls.py`
+  - Xử lý request/response, logic lọc dữ liệu, CRUD chi tiêu.
+  - `project_config/urls.py` là điểm vào URL cấp project.
+- Template + Static
 
-## Lỗi thường gặp & cách xử lý nhanh
+  - Template: `expense_tracker/tracker/templates/`
+  - Static files: `expense_tracker/tracker/static/tracker/styles.css`
+  - Render UI thông qua Django Template Engine.
+- Auth
 
-- `ModuleNotFoundError: No module named 'MySQLdb'`
+  - Dùng `django.contrib.auth` cho login/logout và phân quyền user.
+  - Dữ liệu user nằm trong bảng `auth_user`.
+- Admin
 
-  - Cài driver: `pip install mysqlclient`
-  - Nếu lỗi build, cài Visual C++ Build Tools hoặc thử `pip install pymysql` và cấu hình lại.
-- `Access denied for user 'root'@'localhost'`
+  - Cấu hình tại `expense_tracker/tracker/admin.py`.
+  - Có thể quản trị dữ liệu qua `/admin`.
 
-  - Kiểm tra mật khẩu trong [expense_tracker/project_config/settings.py](expense_tracker/project_config/settings.py).
-  - Đảm bảo MySQL đang chạy.
-- Không thấy thay đổi CSS
+## 11. Lỗi thường gặp
 
-  - Hard refresh: Ctrl + F5.
-- Modal Add/Edit không hiển thị
+- `Access denied for user ...`
 
-  - Đảm bảo server đang chạy ở http://127.0.0.1:8000.
+  - Kiểm tra `DB_USER`, `DB_PASSWORD` trong `expense_tracker/.env`.
+  - Đảm bảo service MySQL đang chạy.
+- `Import "dotenv" could not be resolved`
 
-## Ghi chú
+  - VS Code đang dùng sai interpreter.
+  - Chọn lại `.venv\Scripts\python.exe`.
+- Chạy được app nhưng không có dữ liệu
 
-- Giao diện sử dụng Boxicons và Chart.js qua CDN.
-- Nếu chỉnh CSS, refresh bằng Ctrl + F5 để tránh cache.
-
-## Django được sử dụng như thế nào
-
-- **Mô hình MVT**: `tracker/models.py` định nghĩa dữ liệu, `tracker/views.py` xử lý logic và trả về template trong `tracker/templates/`.
-- **Routing**: `project_config/urls.py` gom URL toàn dự án, còn `tracker/urls.py` chứa các route chi tiêu.
-- **ORM & migrations**: Model thao tác DB qua Django ORM, migrations nằm trong `tracker/migrations/`.
-- **Auth & session**: Dùng sẵn `django.contrib.auth` cho login/logout, `CustomLoginView` để tuỳ biến.
-- **Templates & static**: Giao diện dùng Django Template Language, CSS/ảnh đặt ở `tracker/static/tracker/`.
-- **Form & validation**: Form trong `tracker/forms.py` giúp validate dữ liệu nhập.
+  - Thường do bạn import `database.sql` (schema-only).
+  - Nếu muốn có dữ liệu demo, import `database_hasdata.sql`.
