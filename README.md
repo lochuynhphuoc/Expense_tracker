@@ -2,60 +2,64 @@
 
 MoneyFlow là ứng dụng quản lý chi tiêu cá nhân xây dựng bằng Django. Project hỗ trợ ghi nhận chi tiêu, phân loại, thống kê và hiển thị dashboard tổng quan theo thời gian.
 
-README này hướng dẫn đầy đủ:
-
-- cấu trúc thư mục project
-- cách kết nối MySQL local
-- cách chạy ứng dụng với dữ liệu rỗng hoặc dữ liệu mẫu
-- Django được sử dụng như thế nào trong codebase
-
 ## 1. Yêu cầu
 
 - Python 3.10+
 - MySQL Server 8.x
 - MySQL Workbench
-- VS Code (khuyến nghị)
+- IDE: VS Code (khuyến nghị)
 
 ## 2. Cấu trúc thư mục project
 
 ```text
 Expense_tracker/
-|-- README.md
-`-- expense_tracker/
-		|-- .env
-		|-- .gitignore
-		|-- database.sql
-		|-- database_hasdata.sql
-		|-- manage.py
-		|-- requirements.txt
-		|-- settings.py
-		|-- project_config/
-		|   |-- __init__.py
-		|   |-- asgi.py
-		|   |-- settings.py
-		|   |-- urls.py
-		|   `-- wsgi.py
-		`-- tracker/
-				|-- __init__.py
-				|-- admin.py
-				|-- apps.py
-				|-- context_processors.py
-				|-- forms.py
-				|-- models.py
-				|-- tests.py
-				|-- urls.py
-				|-- views.py
-				|-- migrations/
-				|   |-- 0001_initial.py
-				|   |-- 0002_expense_currency.py
-				|   `-- 0003_usersettings.py
-				|-- static/
-				|   `-- tracker/
-				|       `-- styles.css
-				`-- templates/
-						|-- base.html
-						|-- registration/
-						`-- tracker/
+|-- README.md ............................................... # Tài liệu hướng dẫn cài đặt/chạy project.
+|-- gif_folder/ ............................................. # Chứa ảnh GIF minh họa các bước thao tác.
+`-- expense_tracker/ ........................................ # Thư mục code Django chính.
+	|-- .env ............................................ # Biến môi trường: secret key, debug, thông tin kết nối DB.
+	|-- .gitignore ...................................... # Khai báo file/thư mục không đưa lên Git.
+	|-- database.sql .................................... # SQL chỉ chứa schema (không có dữ liệu mẫu).
+	|-- database_hasdata.sql ............................ # SQL chứa schema + dữ liệu mẫu demo.
+	|-- manage.py ....................................... # CLI quản trị Django (runserver, migrate, createsuperuser...).
+	|-- requirements.txt ................................ # Danh sách thư viện Python cần cài.
+	|-- settings.py ..................................... # File cấu hình bổ sung/legacy (nếu project đang tham chiếu).
+	|-- project_config/ ................................. # Cấu hình cấp project Django.
+	|   |-- __init__.py ................................. # Đánh dấu package Python.
+	|   |-- asgi.py ..................................... # ASGI entrypoint để deploy async server.
+	|   |-- settings.py ................................. # Cấu hình chính Django: apps, middleware, DB, static...
+	|   |-- urls.py ..................................... # URL gốc cấp project, include URL từ các app.
+	|   `-- wsgi.py ..................................... # WSGI entrypoint để deploy bằng Gunicorn/uWSGI...
+	`-- tracker/ ........................................ # App nghiệp vụ quản lý chi tiêu.
+		|-- __init__.py ............................. # Đánh dấu package Python.
+		|-- admin.py ................................ # Đăng ký model lên Django Admin.
+		|-- apps.py ................................. # Cấu hình app tracker (AppConfig).
+		|-- context_processors.py ................... # Dữ liệu dùng chung cho template.
+		|-- forms.py ................................ # Django Form cho nhập/sửa dữ liệu.
+		|-- models.py ............................... # Định nghĩa model: Category, Expense, UserSettings.
+		|-- tests.py ................................ # Unit test/integration test của app.
+		|-- urls.py ................................. # URL riêng của app tracker.
+		|-- views.py ................................ # Xử lý request/response và logic nghiệp vụ.
+		|-- migrations/ ............................. # Lịch sử migration thay đổi schema DB.
+		|   |-- __init__.py ......................... # Đánh dấu thư mục migrations là package.
+		|   |-- 0001_initial.py ..................... # Migration khởi tạo bảng ban đầu.
+		|   |-- 0002_expense_currency.py ............ # Migration thêm trường currency cho Expense.
+		|   `-- 0003_usersettings.py ................ # Migration thêm model/bảng UserSettings.
+		|-- static/ ................................. # Tài nguyên tĩnh (CSS/JS/images) của app.
+		|   `-- tracker/
+		|       `-- styles.css ...................... # CSS tùy biến giao diện.
+		`-- templates/ .............................. # Template HTML dùng Django Template Engine.
+			|-- base.html ....................... # Layout gốc dùng chung toàn site.
+			|-- registration/ ................... # Template cho đăng nhập/đăng ký/đăng xuất.
+			|   |-- login.html .................. # Trang đăng nhập.
+			|   |-- register.html ............... # Trang đăng ký tài khoản.
+			|   `-- logged_out.html ............. # Trang hiển thị sau khi logout.
+			`-- tracker/ ........................ # Template cho chức năng chi tiêu.
+				|-- add_expense.html ........ # Form thêm khoản chi.
+				|-- delete_expense.html ..... # Trang xác nhận xóa khoản chi.
+				|-- edit_expense.html ....... # Form sửa khoản chi.
+				|-- expense_list.html ... ... # Danh sách/tổng quan các khoản chi.
+				|-- profile.html ............ # Trang hồ sơ người dùng.
+				`-- settings.html ........... # Trang cài đặt người dùng (ví dụ: tiền tệ).
 ```
 
 ## 3. Ý nghĩa 2 file SQL
@@ -162,7 +166,7 @@ SELECT COUNT(*) AS expenses_count FROM expenses_expense;
 SELECT COUNT(*) AS users_count FROM auth_user;
 ```
 
-## 10. Django được sử dụng như thế nào trong project này
+## 10. Django
 
 Project dùng Django theo mô hình MVT (Model - View - Template):
 
