@@ -161,9 +161,10 @@ Vào [http://127.0.0.1:8000/](http://127.0.0.1:8000/) để thực hiện đăng
 
 ```sql
 USE expense_tracker;
-SELECT COUNT(*) AS categories_count FROM expenses_category;
-SELECT COUNT(*) AS expenses_count FROM expenses_expense;
-SELECT COUNT(*) AS users_count FROM auth_user;
+SELECT
+  (SELECT COUNT(*) FROM expenses_category) AS categories_count,
+  (SELECT COUNT(*) FROM expenses_expense) AS expenses_count,
+  (SELECT COUNT(*) FROM auth_user) AS users_count;
 ```
 
 ## 10. Django
